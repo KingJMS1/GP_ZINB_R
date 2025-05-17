@@ -7,5 +7,5 @@
 NNMatrix(coords, n.neighbors, n.omp.threads = 2, search.type = "brute")
 }
 \description{
-Create neighbord matrix with spNNGP
+Create neighbourhood matrix with spNNGP
 }
