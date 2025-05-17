@@ -512,3 +512,29 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
     }
     return(results)
 }
+
+#' make_y_Vs_Vt
+#' @description Create y, along with spatial and temporal design matrices from an observation matrix.
+#' @param obs_matrix s by t matrix, where s is the number of locations, t is the number of times, each entry of the matrix is a nonnegative integer.
+#' @return A List of the following values:          
+#' \itemize{
+#'      \item {\strong{y:} } {Flattened version of the observation matrix, flattened in column-major order.}
+#'      \item {\strong{Vs:} } {Spatial design matrix, indicates which elements in y correspond with which positions in space}
+#'      \item {\strong{Vt:} } {Temporal design matrix, indicates which elements in y correspond with which positions in time}
+#' }
+#' @export
+#' @importFrom Matrix sparseMatrix
+make_y_Vs_Vt <- function(obs_matrix) {
+    # Assumes rows are space, columns are time
+    obs_matrix <- as.matrix(unname(obs_matrix))
+    n_temporal <- ncol(obs_matrix)
+    n_spatial <- nrow(obs_matrix)
+    N <- n_spatial * n_temporal
+
+    # Create y, Vs, Vt
+    y <- as.vector(obs_matrix)
+    Vt <- as.matrix(sparseMatrix(i = 1:N, j = rep(1:n_temporal, each=n_spatial), x=rep(1, N)))
+    Vs <- as.matrix(sparseMatrix(i = 1:N, j = rep(1:n_spatial, n_temporal), x=rep(1,N)))
+
+    return(list(Vs=Vs, Vt=Vt, y=y))
+}

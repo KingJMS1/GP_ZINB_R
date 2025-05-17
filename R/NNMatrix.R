@@ -44,7 +44,7 @@ get_NN_ind <- function(ind, ind_distM_i, M) {
 }
 
 #' NNMatrix
-#' @description Create neighbord matrix with spNNGP
+#' @description Create neighbourhood matrix with spNNGP
 #' @importFrom spNNGP spConjNNGP
 NNMatrix <- function(coords, n.neighbors, n.omp.threads = 2,
                      search.type = "brute") {
