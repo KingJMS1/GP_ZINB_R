@@ -153,14 +153,16 @@ sim_beta <- output$Beta
 # Examine coefficients for regressions
 cat("\nLogistic Regression Coefficients:\n")
 alpha
-apply(sim_alpha, 2, function(x) quantile(x, probs=c(0.05, 0.95)))
+apply(sim_alpha, 2, function(x) quantile(x, probs=c(0.025, 0.5, 0.975)))
 
 cat("\nNegative Binomial Coefficients:\n")
 beta
-apply(sim_beta, 2, function(x) quantile(x, probs=c(0.05, 0.95)))
+apply(sim_beta, 2, function(x) quantile(x, probs=c(0.025, 0.5, 0.975)))
 
 # Examine how often various samples are at risk
 cat("\nAt risk 'probabilities':\n")
 at_risk <- output$at_risk
 sim_p_at_risk <- apply(at_risk, 2, mean)
 sim_p_at_risk[1:20]
+cat("\nActual at risk:\n")
+u[1:20]

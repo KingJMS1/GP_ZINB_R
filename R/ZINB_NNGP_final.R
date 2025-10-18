@@ -382,7 +382,7 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         Kt_bin_nosigma_inv <- forceSymmetric(solve(Kt_bin_nosigma))
         a_new <- a_sigmat + 0.5 * n_time_points
         b_new <- b_sigmat + 0.5 * (t(b) %*% Kt_bin_nosigma_inv %*% b)
-        sigma1t.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new)
+        sigma1t.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new[1,1])
         sigma1t <- sqrt(sigma1t.sq)
 
         Kt_bin <- Kt_bin_nosigma * sigma1t.sq
@@ -409,7 +409,7 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         Ks_bin_inv_nosigma <- forceSymmetric(solve(Ks_bin_nosigma))
         a_new <- a_sigmas + 0.5 * n
         b_new <- b_sigmas + 0.5 * (t(a) %*% Ks_bin_inv_nosigma %*% a)
-        sigma1s.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new)
+        sigma1s.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new[1,1])
         sigma1s <- sqrt(sigma1s.sq)
 
 
@@ -477,7 +477,7 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         Kt_nb_inv_nosigma <- forceSymmetric(solve(Kt_nb_nosigma))
         a_new <- a_sigmat + 0.5 * n_time_points
         b_new <- b_sigmat + 0.5 * (t(d) %*% Kt_nb_inv_nosigma %*% d)
-        sigma2t.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new)
+        sigma2t.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new[1,1])
         sigma2t <- sqrt(sigma2t.sq)
 
         Kt_nb <- Kt_nb_nosigma * sigma2t.sq
@@ -506,7 +506,7 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         Ks_nb_inv_nosigma <- forceSymmetric(solve(Ks_nb_nosigma))
         a_new <- a_sigmas + 0.5 * n
         b_new <- b_sigmas + 0.5 * (t(c) %*% Ks_nb_inv_nosigma %*% c)
-        sigma2s.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new)
+        sigma2s.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new[1,1])
         sigma2s <- sqrt(sigma2s.sq)
 
         Ks_nb <- Ks_nb_nosigma * sigma2s.sq
