@@ -39,7 +39,7 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/HuangExplanation.html">Demonstration of ZINB_NNGP with Simulated Spatial-Temporal Data</a></li>
+<li><a class="dropdown-item" href="../articles/HuangExplanation.html">Demonstration of ZINB_GP with Simulated Spatial-Temporal Data</a></li>
     <li><a class="dropdown-item" href="../articles/simulated_data.html">A Simple Simulation</a></li>
   </ul>
 </li>
@@ -71,7 +71,7 @@
     
     
 <div class="section level2">
-<h2 id="using-zinb-gps-zinb_nngp-model">Using ZINB.GP’s ZINB_NNGP model<a class="anchor" aria-label="anchor" href="#using-zinb-gps-zinb_nngp-model"></a>
+<h2 id="using-zinb-gps-zinb_gp-model">Using ZINB.GP’s ZINB_GP model<a class="anchor" aria-label="anchor" href="#using-zinb-gps-zinb_gp-model"></a>
 </h2>
 <p>First, we import our package as well as some dependencies we will use
 to simulate the dataset.</p>
@@ -84,7 +84,7 @@ to simulate the dataset.</p>
 </h3>
 <p>We go through the full process to generate the dataset in an attempt
 to provide clarity on what the various matrix parameters passed into
-ZINB_NNGP are.</p>
+ZINB_GP are.</p>
 <div class="section level4">
 <h4 id="helper-functions">Helper functions<a class="anchor" aria-label="anchor" href="#helper-functions"></a>
 </h4>
@@ -241,7 +241,7 @@ link.</p>
 <p>Now we are ready to run the model. This is done as follows:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run for a short time for demo purposes</span></span>
-<span><span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ZINB_NNGP.html">ZINB_NNGP</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span>, <span class="va">coords</span>, <span class="va">Vs</span>, <span class="va">Vt</span>, <span class="va">Ds</span>, <span class="va">Dt</span>, M <span class="op">=</span> <span class="fl">10</span>, <span class="fl">200</span>, <span class="fl">100</span>, <span class="fl">1</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ZINB_GP.html">ZINB_GP</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span>, <span class="va">coords</span>, <span class="va">Vs</span>, <span class="va">Vt</span>, <span class="va">Ds</span>, <span class="va">Dt</span>, M <span class="op">=</span> <span class="fl">10</span>, <span class="fl">200</span>, <span class="fl">100</span>, <span class="fl">1</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="va">output</span><span class="op">$</span><span class="va">Y_pred</span></span>
 <span><span class="va">sim_alpha</span> <span class="op">&lt;-</span> <span class="va">output</span><span class="op">$</span><span class="va">Alpha</span></span>
 <span><span class="va">sim_beta</span> <span class="op">&lt;-</span> <span class="va">output</span><span class="op">$</span><span class="va">Beta</span></span></code></pre></div>
@@ -268,8 +268,8 @@ samples were selected to be at risk.</p>
 <span><span class="va">at_risk</span> <span class="op">&lt;-</span> <span class="va">output</span><span class="op">$</span><span class="va">at_risk</span></span>
 <span><span class="va">sim_p_at_risk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">at_risk</span>, <span class="fl">2</span>, <span class="va">mean</span><span class="op">)</span></span>
 <span><span class="va">sim_p_at_risk</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span></span>
-<span><span class="co">#&gt;  [1] 0.48 0.44 0.37 1.00 0.76 0.94 1.00 0.95 0.82 0.88 0.88 0.56 0.55 1.00 0.91</span></span>
-<span><span class="co">#&gt; [16] 0.63 0.70 1.00 0.86 1.00</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] 0.25 0.15 0.07 1.00 0.71 0.87 1.00 0.94 0.68 0.83 0.69 0.35 0.16 1.00 0.82</span></span>
+<span><span class="co">#&gt; [16] 0.44 0.60 1.00 0.94 1.00</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -283,7 +283,7 @@ samples were selected to be at risk.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>

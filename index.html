@@ -41,7 +41,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/HuangExplanation.html">Demonstration of ZINB_NNGP with Simulated Spatial-Temporal Data</a></li>
+<li><a class="dropdown-item" href="articles/HuangExplanation.html">Demonstration of ZINB_GP with Simulated Spatial-Temporal Data</a></li>
     <li><a class="dropdown-item" href="articles/simulated_data.html">A Simple Simulation</a></li>
   </ul>
 </li>
@@ -67,7 +67,7 @@
 </h2>
 <p>Install the devtools R package, then run the following command</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BayesLogit"</span>, <span class="st">"FastGP"</span>, <span class="st">"LaplacesDemon"</span>, <span class="st">"MASS"</span>, <span class="st">"Matrix"</span>, <span class="st">"msm"</span>, <span class="st">"mvtnorm"</span>, <span class="st">"spNNGP"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BayesLogit"</span>, <span class="st">"LaplacesDemon"</span>, <span class="st">"MASS"</span>, <span class="st">"Matrix"</span>, <span class="st">"msm"</span>, <span class="st">"mvtnorm"</span>, <span class="st">"spNNGP"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"KingJMS1/NNGP_ZINB_R"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -76,7 +76,7 @@
 <p>Detailed examples with full code can be found in the vignettes folder, or at the following link under articles: <a href="https://kingjms1.github.io/NNGP_ZINB_R/" class="uri">https://kingjms1.github.io/NNGP_ZINB_R/</a></p>
 <pre><code>X       Other Predictor variables
 y       Zero inflated count response
-coords  Spatial coordinates for NNGP
+coords  Spatial coordinates for GP
 Vs      Spatially varying predictor variables
         (e.g. one-hot indication of which location this is for varying intercept),
         wrapped in sparseMatrix from Matrix R package.
@@ -84,16 +84,16 @@ Vs      Spatially varying predictor variables
 Vt      Temporal varying predictor variables, wrapped in sparseMatrix from Matrix R package.
         Will be multiplied by the temporal random effects for prediction.
 Ds      Spatial distance matrix, diagonal should be 0,
-        off diagonal is distance between elements i and j in space, inputs to the spatial NNGP kernel
+        off diagonal is distance between elements i and j in space, inputs to the spatial GP kernel
 Dt      Temporal distance matirx, diagonal should be 0,
         off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel
-M       How many neighbors to allow in the spatial NNGP algorithm, defaults to 10.
+M       How many neighbors to allow in the spatial GP algorithm, defaults to 10.
 nsim    How long to run MCMC in total, must be greater than burn.
 burn    How long to run MCMC before saving samples.</code></pre>
 <p>Given all of the above, predictions can then be found via:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://kingjms1.github.io/NNGP_ZINB_R/">ZINB.GP</a></span><span class="op">)</span></span>
-<span><span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ZINB_NNGP.html">ZINB_NNGP</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span>, <span class="va">coords</span>, <span class="va">Vs</span>, <span class="va">Vt</span>, <span class="va">Ds</span>, <span class="va">Dt</span>, M <span class="op">=</span> <span class="va">M</span>, <span class="va">nsim</span>, <span class="va">burn</span>, save_ypred <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ZINB_GP.html">ZINB_GP</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span>, <span class="va">coords</span>, <span class="va">Vs</span>, <span class="va">Vt</span>, <span class="va">Ds</span>, <span class="va">Dt</span>, M <span class="op">=</span> <span class="va">M</span>, <span class="va">nsim</span>, <span class="va">burn</span>, save_ypred <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="va">output</span><span class="op">$</span><span class="va">Y_pred</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -139,7 +139,7 @@ burn    How long to run MCMC before saving samples.</code></pre>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>
