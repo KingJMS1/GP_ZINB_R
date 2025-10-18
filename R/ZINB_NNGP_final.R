@@ -1,3 +1,47 @@
+#' solve_svd
+#' @description Use SVD to solve a linear system Ax=b
+#' 
+#' @param A_svd SVD of A
+#' @param b b
+#' @return x
+solve_svd <- function(A_svd, b, threshold = 1e-12) {
+    # Get parts that have nonzero eigenvalues
+    rank <- sum(A_svd$d > threshold)
+    Upart <- A_svd$u[,1:rank]
+    Vpart <- A_svd$v[,1:rank]
+    dpart <- A_svd$d[1:rank]
+    
+    # Compute solution
+    result <- Vpart %*% ((1 / dpart) * crossprod(Upart, b))
+    return(result)
+}
+
+#' mvn_sample_svd
+#' @description Use SVD for precision matrix to sample from multivariate normal distribution
+#' 
+#' @param P_svd SVD of precision matrix
+#' @param mu Mean of MVN to draw from
+#' @param entropy Draw from MVN of correct size (can be used to draw all mvns at once for efficiency)
+mvn_sample_svd <- function(P_svd, mu, entropy = NULL, threshold = 1e-12) {
+    if (is.null(entropy)) {
+        entropy <- as.matrix(rnorm(length(mu)))
+    }
+
+    P_half_svd <- list(u=P_svd$u, d=sqrt(P_svd$d), v=P_svd$u)
+    varPart <- solve_svd(P_half_svd, entropy, threshold = sqrt(threshold))
+    return(mu + varPart)
+}
+
+#' normalize
+#' @description Normalize a (square) matrix to have frobenius norm 1, then add a small term to its diagonal
+#' 
+#' @param A Matrix to normalize (square)
+#' @param eps Term to add to diagonal
+normalize <- function(A, eps=1e-8) {
+    frobNorm <- sqrt(sum(A*A))
+    return((A / frobNorm) + diag(eps, nrow=nrow(A)))
+}
+
 #' ZINB_NNGP
 #' @description Run the ZINB NNGP model described in https://doi.org/10.1016/j.jspi.2023.106098.
 #'
@@ -48,7 +92,6 @@
 #' @importFrom mvtnorm rmvnorm
 #' @importFrom mvtnorm dmvnorm
 #' @importFrom BayesLogit rpg
-#' @importFrom FastGP rcppeigen_invert_matrix
 #' @importFrom Matrix bdiag
 #' @importFrom Matrix sparseMatrix
 #' @importFrom msm rtnorm
@@ -78,7 +121,7 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
     ####### priors for alpha and beta ######
     T0a <- diag(1, p)
     T0b <- diag(.01, p)
-    s <- 0.0003
+    s <- 0.0003 # TODO: Why so low.
 
     ####### kernel hyperparameters  ######
     a_phi <- 8
@@ -124,7 +167,7 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
 
     eta1 <- X %*% alpha1 + 0
     eta2 <- X %*% beta + 0 # Use all n observations
-    p_at_risk <- pmax(0.01, pmin(0.99, exp(eta1) / (1 + exp(eta1)))) # at-risk probability
+    p_at_risk <- sigmoid(eta1) # at-risk probability
 
     q <- 1 / (1 + exp(eta2))
     theta <- p_at_risk * (q^r) / (p_at_risk * (q^r) + 1 - p_at_risk) # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
@@ -140,8 +183,10 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
     ##########################
     l1s <- l2s <- a_phi / b_phi
     sigma1s <- sigma2s <- sqrt(b_sigmas / (a_sigmas - 1))
-    Ks_bin <- sigma1s^2 * exp(-l1s * Ds)
-    Ks_nb <- sigma2s^2 * exp(-l2s * Ds)
+    Ks_bin <- sigma1s^2 * normalize(exp(-l1s * Ds))
+    Ks_bin_inv <- forceSymmetric(solve(Ks_bin))
+    Ks_nb <- sigma2s^2 * normalize(exp(-l2s * Ds))
+    Ks_nb_inv <- forceSymmetric(solve(Ks_nb))
     a <- t(rmvnorm(n = 1, sigma = Ks_bin))
     c <- t(rmvnorm(n = 1, sigma = Ks_nb))
 
@@ -150,8 +195,10 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
     #################
     sigma1t <- sigma2t <- sqrt(b_sigmat / (a_sigmat - 1))
     l1t <- l2t <- a_lt / b_lt
-    Kt_bin <- sigma1t^2 * exp(-Dt / (l1t^2))
-    Kt_nb <- sigma2t^2 * exp(-Dt / (l2t^2))
+    Kt_bin <- sigma1t^2 * normalize(exp(-Dt / (l1t^2)))
+    Kt_bin_inv <- forceSymmetric(solve(Kt_bin))
+    Kt_nb <- sigma2t^2 * normalize(exp(-Dt / (l2t^2)))
+    Kt_nb_inv <- forceSymmetric(solve(Kt_nb))
     b <- t(rmvnorm(n = 1, sigma = Kt_bin))
     d <- t(rmvnorm(n = 1, sigma = Kt_nb))
 
@@ -201,23 +248,16 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
     ########
     # MCMC #
     ########
-    NN.matrix <- NNMatrix(
-        coords = coords, n.neighbors = M,
-        n.omp.threads = 1, search.type = "cb"
-    )
     XV <- cbind(X, Vs, Vt)
     for (i in 1:nsim)   {
-        Ks_bin <- sigma1s^2 * exp(-l1s * Ds)
-        Ks_nb <- sigma2s^2 * exp(-l2s * Ds)
-        Kt_bin <- sigma1t^2 * exp(-Dt / (l1t^2))
-        Kt_nb <- sigma2t^2 * exp(-Dt / (l2t^2)) # TODO: Recomputation of above variables here seems unnecessary
+        # Ensure these are all updated from last iteration
         Sigma0_bin.inv <- as.matrix(bdiag(
-            forceSymmetric(rcppeigen_invert_matrix(Ks_bin)),
-            forceSymmetric(rcppeigen_invert_matrix(Kt_bin))
+            Ks_bin_inv,
+            Kt_bin_inv
         ))
         Sigma0_nb.inv <- as.matrix(bdiag(
-            forceSymmetric(rcppeigen_invert_matrix(Ks_nb)),
-            forceSymmetric(rcppeigen_invert_matrix(Kt_nb))
+            Ks_nb_inv,
+            Kt_nb_inv
         ))
         T0_bin <- as.matrix(bdiag(T0a, Sigma0_bin.inv))
         T0_nb <- as.matrix(bdiag(T0b, Sigma0_nb.inv))
@@ -228,33 +268,33 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         z <- (y1 - 1 / 2) / w
 
         # Update alpha, a, b
-        v <- rcppeigen_invert_matrix(crossprod(sqrt(w) * XV) + T0_bin)
-        m <- v %*% (t(sqrt(w) * XV) %*% (sqrt(w) * (z - Vs %*% eps1s - Vt %*% eps1t)))
-        alphaab <- c(rmvnorm(1, m[, 1], v))
+        svd_vinv <- svd(crossprod(sqrt(w) * XV) + T0_bin)
+        m <- solve_svd(svd_vinv, (t(sqrt(w) * XV) %*% (sqrt(w) * (z - Vs %*% eps1s - Vt %*% eps1t))))
+        alphaab <- c(mvn_sample_svd(svd_vinv, m))
         alpha <- alphaab[1:p]
         a <- alphaab[(p + 1):(p + n)]
         b <- alphaab[-(1:(p + n))]
 
         # Update eps1s
-        v <- solve(crossprod(sqrt(w) * Vs) + 1 / (sigma_eps1s^2) * diag(n))
-        m <- v %*% (t(sqrt(w) * Vs) %*% (sqrt(w) * (z - (X %*% alpha + Vs %*% a + Vt %*% b + Vt %*% eps1t))))
-        eps1s <- c(rmvnorm(1, m[, 1], v))
+        svd_vinv <- svd(crossprod(sqrt(w) * Vs) + 1 / (sigma_eps1s^2) * diag(n))
+        m <- solve_svd(svd_vinv, (t(sqrt(w) * Vs) %*% (sqrt(w) * (z - (X %*% alpha + Vs %*% a + Vt %*% b + Vt %*% eps1t)))))
+        eps1s <- c(mvn_sample_svd(svd_vinv, m))
 
         # Update eps1t
-        v <- solve(crossprod(sqrt(w) * Vt) + 1 / (sigma_eps1t^2) * diag(n_time_points))
-        m <- v %*% (t(sqrt(w) * Vt) %*% (sqrt(w) * (z - (X %*% alpha + Vs %*% a + Vt %*% b + Vs %*% eps1s))))
-        eps1t <- c(rmvnorm(1, m[, 1], v))
+        svd_vinv <- svd(crossprod(sqrt(w) * Vt) + 1 / (sigma_eps1t^2) * diag(n_time_points))
+        m <- solve_svd(svd_vinv, (t(sqrt(w) * Vt) %*% (sqrt(w) * (z - (X %*% alpha + Vs %*% a + Vt %*% b + Vs %*% eps1s)))))
+        eps1t <- c(mvn_sample_svd(svd_vinv, m))
 
         # Update at-risk indicator y1 (W in paper)
         eta1 <- X %*% alpha + Vs %*% a + Vt %*% b + Vs %*% eps1s + Vt %*% eps1t
         eta2 <- X %*% beta + Vs %*% c + Vt %*% d + Vs %*% eps2s + Vt %*% eps2t # Use all n observations
-        pi <- pmax(0.01, pmin(0.99, exp(eta1) / (1 + exp(eta1)))) # at-risk probability
+        pi <- sigmoid(eta1) # at-risk probability
         q <- 1 / (1 + exp(eta2)) # Pr(y=0|y1=1)
         theta <- pi * (q^r) / (pi * (q^r) + 1 - pi) # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
         y1[y == 0] <- rbinom(sum(y == 0), 1, theta[y == 0]) # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
         N1 <- sum(y1)
 
-        # Update r
+        # Update r, TODO: Check this.
         rnew <- rtnorm(1, r, sqrt(s), lower = 0) # Treat r as continuous
         ratio <- sum(dnbinom(y[y1 == 1], rnew, q[y1 == 1], log = TRUE)) - sum(dnbinom(y[y1 == 1], r, q[y1 == 1], log = TRUE)) +
             dtnorm(r, rnew, sqrt(s), 0, log = TRUE) - dtnorm(rnew, r, sqrt(s), 0, log = TRUE) # Uniform Prior for R
@@ -270,12 +310,13 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         for (j in 1:N1) l[j] <- sum(rbinom(ytmp[j], 1, round(r / (r + 1:ytmp[j] - 1), 6))) # Could try to avoid loop; rounding avoids numerical instability
 
         # Update psi
-        psi <- exp(eta2[y1 == 1]) / (1 + exp(eta2[y1 == 1]))
+        psi <- sigmoid(eta2[y1 == 1])
 
         # update l1t, sigma1t
+        # TODO: Remove restrictions like this.
         l1t_star <- rnorm(1, l1t, sd_l)
         if ((l1t_star < 5) && (l1t_star > 0)) {
-            Kt_bin_star <- sigma1t^2 * exp(-Dt / (l1t_star^2))
+            Kt_bin_star <- sigma1t^2 * normalize(exp(-Dt / (l1t_star^2)))
             likelihood_l1t <- dmvnorm(b, mean = rep(0, n_time_points), sigma = Kt_bin_star, log = TRUE) -
                 dmvnorm(b, mean = rep(0, n_time_points), sigma = Kt_bin, log = TRUE)
             prior_l1t <- dgamma(x = l1t_star, shape = a_lt, rate = b_lt, log = TRUE) -
@@ -285,26 +326,30 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
             if (!is.na(posterior_l1t)) {
                 if (log(runif(1)) < posterior_l1t) {
                     l1t <- l1t_star
-                    Kt_bin <- Kt_bin_star
                 }
             }
         }
 
         ## posterior dist
-        K_inv <- rcppeigen_invert_matrix(Kt_bin + diag(exp(-10), nrow = n_time_points))
+        Kt_bin_nosigma <- normalize(exp(-Dt / l1t^2))
+        Kt_bin_nosigma_inv <- forceSymmetric(solve(Kt_bin_nosigma))
         a_new <- a_sigmat + 0.5 * n_time_points
-        b_new <- b_sigmat + 0.5 * (t(b) %*% K_inv %*% b)
+        b_new <- b_sigmat + 0.5 * (t(b) %*% Kt_bin_nosigma_inv %*% b)
         sigma1t.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new)
         sigma1t <- sqrt(sigma1t.sq)
+
+        Kt_bin <- Kt_bin_nosigma * sigma1t.sq
+        Kt_bin_inv <- Kt_bin_nosigma_inv * (1 / sigma1t.sq)
 
         # update phi_bin using M-H
         phi_bin_star <- rnorm(1, l1s, 2) # proposal dist
 
+        # TODO: Remove restrictions like this.
         if ((phi_bin_star < 16) && (phi_bin_star > 0)) {
-            Ks_bin_star <- sigma1s^2 * exp(-phi_bin_star * Ds)
+            Ks_bin_star <- sigma1s^2 * normalize(exp(-phi_bin_star * Ds))
             likelihood_phi_bin <- dmvnorm(a, mean = rep(0, n), sigma = Ks_bin_star, log = TRUE) - dmvnorm(a, mean = rep(0, n), sigma = Ks_bin, log = TRUE)
             prior_phi_bin <- dgamma(x = phi_bin_star, shape = a_phi, rate = b_phi, log = TRUE) - dgamma(x = l1s, shape = a_phi, rate = b_phi, log = TRUE)
-            posterior_phi_bin <- likelihood_phi_bin + prior_phi_bin # prior ratio may get too large and dominate
+            posterior_phi_bin <- likelihood_phi_bin + prior_phi_bin 
 
             if (!is.na(posterior_phi_bin)) {
                 if (log(runif(1)) < posterior_phi_bin) {
@@ -314,34 +359,19 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         }
 
         # update sigma1s
-        ## obtain A and D using C and N(i)---cluster
-        NN.matrix <- NNMatrix(
-            coords = coords, n.neighbors = M,
-            n.omp.threads = 1, search.type = "cb"
-        ) # replace the input NNmatrix
-        AD <- getAD(
-            neardist = NN.matrix$NN_dist, neardistM = NN.matrix$NN_distM,
-            N = n, M = M, phi = l1s
-        )
-
-        Dm <- AD[M + 1, ]
-        ind_x <- c(c(rep(2:M, times = 1:(M - 1)), rep(((M + 1):n), each = M)), 1:n)
-        ind_y <- c(c(t(NN.matrix$NN_ind))[which(c(t(NN.matrix$NN_ind)) > 0)], 1:n)
-        DIA <-
-            as.matrix(sparseMatrix(
-                i = ind_x, j = (ind_y),
-                x = c(-na.omit(as.vector(AD[-(M + 1), ])), rep(1, n))
-            ) / sqrt(Dm))
-
-        rho_inv <- t(DIA) %*% DIA
-        K_inv <- 1 / (sigma1s^2) * rho_inv
-
-        ## posterior dist
+        Ks_bin_nosigma <- normalize(exp(-l1s * Ds))
+        Ks_bin_inv_nosigma <- forceSymmetric(solve(Ks_bin_nosigma))
         a_new <- a_sigmas + 0.5 * n
-        b_new <- b_sigmas + 0.5 * (t(a) %*% K_inv %*% a)
+        b_new <- b_sigmas + 0.5 * (t(a) %*% Ks_bin_inv_nosigma %*% a)
         sigma1s.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new)
         sigma1s <- sqrt(sigma1s.sq)
 
+
+        # Update Ks_bin, Ks_bin_inv
+        Ks_bin <- sigma1s.sq * Ks_bin_nosigma
+        Ks_bin_inv <- (1 / sigma1s.sq) * Ks_bin_inv_nosigma
+        
+        
         # Update sigma_eps1s
         a_eps1s_new <- a_eps1s + 0.5 * n
         b_eps1s_new <- b_eps1s + 0.5 * sum(eps1s^2)
@@ -360,54 +390,58 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         z <- (y[y1 == 1] - r) / (2 * w)
 
         # Update beta, c, d
-        v <- rcppeigen_invert_matrix(crossprod(sqrt(w) * XV[y1 == 1, ]) + T0_nb)
-        m <- v %*% (t(sqrt(w) * XV[y1 == 1, ]) %*% (sqrt(w) * (z - Vs[y1 == 1, ] %*% eps2s - Vt[y1 == 1, ] %*% eps2t)))
-        betacd <- c(rmvnorm(1, m[, 1], v))
+        svd_vinv <- svd(crossprod(sqrt(w) * XV[y1 == 1, ]) + T0_nb)
+        m <- solve_svd(svd_vinv, (t(sqrt(w) * XV[y1 == 1, ]) %*% (sqrt(w) * (z - Vs[y1 == 1, ] %*% eps2s - Vt[y1 == 1, ] %*% eps2t))))
+        betacd <- c(mvn_sample_svd(svd_vinv, m))
         beta <- betacd[1:p]
         c <- betacd[(p + 1):(p + n)]
         d <- betacd[-(1:(p + n))]
 
         # update eps2s
-        v <- solve(crossprod(sqrt(w) * Vs[y1 == 1, ]) + 1 / (sigma_eps2s^2) * diag(n))
-        # v<-rcppeigen_invert_matrix(crossprod(sqrt(w)*Vs[y1==1,])+Sigma0e_nb.inv)
-        m <- v %*% (t(sqrt(w) * Vs[y1 == 1, ]) %*% (sqrt(w) * (z - X[y1 == 1, ] %*% beta - Vs[y1 == 1, ] %*% c - Vt[y1 == 1, ] %*% d - Vt[y1 == 1, ] %*% eps2t)))
-        eps2s <- c(rmvnorm(1, m[, 1], v))
+        svd_vinv <- svd(crossprod(sqrt(w) * Vs[y1 == 1, ]) + 1 / (sigma_eps2s^2) * diag(n))
+        m <- solve_svd(svd_vinv, (t(sqrt(w) * Vs[y1 == 1, ]) %*% (sqrt(w) * (z - X[y1 == 1, ] %*% beta - Vs[y1 == 1, ] %*% c - Vt[y1 == 1, ] %*% d - Vt[y1 == 1, ] %*% eps2t))))
+        eps2s <- c(mvn_sample_svd(svd_vinv, m))
 
         # update eps2t
-        v <- solve(crossprod(sqrt(w) * Vt[y1 == 1, ]) + 1 / (sigma_eps2t^2) * diag(n_time_points))
-        m <- v %*% (t(sqrt(w) * Vt[y1 == 1, ]) %*% (sqrt(w) * (z - X[y1 == 1, ] %*% beta - Vs[y1 == 1, ] %*% c - Vt[y1 == 1, ] %*% d - Vs[y1 == 1, ] %*% eps2s)))
-        eps2t <- c(rmvnorm(1, m[, 1], v))
+        svd_vinv <- svd(crossprod(sqrt(w) * Vt[y1 == 1, ]) + 1 / (sigma_eps2t^2) * diag(n_time_points))
+        m <- solve_svd(svd_vinv, (t(sqrt(w) * Vt[y1 == 1, ]) %*% (sqrt(w) * (z - X[y1 == 1, ] %*% beta - Vs[y1 == 1, ] %*% c - Vt[y1 == 1, ] %*% d - Vs[y1 == 1, ] %*% eps2s))))
+        eps2t <- c(mvn_sample_svd(svd_vinv, m))
 
         # update l2t, sigma2t
         l2t_star <- rnorm(1, l2t, sd_l)
 
+        # TODO: Remove restrictions like this.
         if ((l2t_star < 5) && (l2t_star > 0)) {
-            Kt_nb_star <- sigma2t^2 * exp(-Dt / (l2t_star^2))
+            Kt_nb_star <- sigma2t^2 * normalize(exp(-Dt / (l2t_star^2)))
             likelihood_l2t <- dmvnorm(d, mean = rep(0, n_time_points), sigma = Kt_nb_star, log = TRUE) -
                 dmvnorm(d, mean = rep(0, n_time_points), sigma = Kt_nb, log = TRUE)
             prior_l2t <- dgamma(x = l2t_star, shape = a_lt, rate = b_lt, log = TRUE) -
                 dgamma(x = l2t, shape = a_lt, rate = b_lt, log = TRUE)
-            posterior_l2t <- likelihood_l2t + prior_l2t # prior ratio may get too large and dominate
+            posterior_l2t <- likelihood_l2t + prior_l2t 
 
             if (!is.na(posterior_l2t)) {
                 if (log(runif(1)) < posterior_l2t) {
                     l2t <- l2t_star
-                    Kt_nb <- Kt_nb_star
                 }
             }
         }
 
         ## posterior dist
-        K_inv <- rcppeigen_invert_matrix(Kt_nb + diag(exp(-10), nrow = n_time_points))
+        Kt_nb_nosigma <- normalize(exp(-Dt / l2t^2))
+        Kt_nb_inv_nosigma <- forceSymmetric(solve(Kt_nb_nosigma))
         a_new <- a_sigmat + 0.5 * n_time_points
-        b_new <- b_sigmat + 0.5 * (t(d) %*% K_inv %*% d)
+        b_new <- b_sigmat + 0.5 * (t(d) %*% Kt_nb_inv_nosigma %*% d)
         sigma2t.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new)
         sigma2t <- sqrt(sigma2t.sq)
 
+        Kt_nb <- Kt_nb_nosigma * sigma2t.sq
+        Kt_nb_inv <- Kt_nb_inv_nosigma * (1 / sigma2t.sq)
+
         # update l2s using M-H
+        # TODO: Remove restrictions like this.
         l2s_star <- rnorm(1, l2s, 1)
         if ((l2s_star < 16) && (l2s_star > 0)) {
-            Ks_nb_star <- sigma2s^2 * exp(-l2s_star * Ds)
+            Ks_nb_star <- sigma2s^2 * normalize(exp(-l2s_star * Ds))
             likelihood_phi_nb <- dmvnorm(c, mean = rep(0, n), sigma = Ks_nb_star, log = TRUE) -
                 dmvnorm(c, mean = rep(0, n), sigma = Ks_nb, log = TRUE)
             prior_phi_nb <- dgamma(x = l2s_star, shape = a_phi, rate = b_phi, log = TRUE) -
@@ -421,32 +455,15 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         }
 
         # update sigma2s
-        ## obtain A and D using C and N(i)---cluster
-        NN.matrix <- NNMatrix(
-            coords = coords, n.neighbors = M,
-            n.omp.threads = 1, search.type = "cb"
-        ) # replace the input NNmatrix
-        AD <- getAD(
-            neardist = NN.matrix$NN_dist, neardistM = NN.matrix$NN_distM,
-            N = n, M = M, phi = l2s
-        )
-        Dm <- AD[M + 1, ]
-        ind_x <- c(c(rep(2:M, times = 1:(M - 1)), rep(((M + 1):n), each = M)), 1:n)
-        ind_y <- c(c(t(NN.matrix$NN_ind))[which(c(t(NN.matrix$NN_ind)) > 0)], 1:n)
-        DIA <-
-            as.matrix(sparseMatrix(
-                i = ind_x, j = (ind_y),
-                x = c(-na.omit(as.vector(AD[-(M + 1), ])), rep(1, n))
-            ) / sqrt(Dm))
-
-        rho_inv <- t(DIA) %*% DIA
-        K_inv <- 1 / (sigma2s^2) * rho_inv
-
-        ## posterior dist
+        Ks_nb_nosigma <- normalize(exp(-l2s * Ds))
+        Ks_nb_inv_nosigma <- forceSymmetric(solve(Ks_nb_nosigma))
         a_new <- a_sigmas + 0.5 * n
-        b_new <- b_sigmas + 0.5 * (t(c) %*% K_inv %*% c)
+        b_new <- b_sigmas + 0.5 * (t(c) %*% Ks_nb_inv_nosigma %*% c)
         sigma2s.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new)
         sigma2s <- sqrt(sigma2s.sq)
+
+        Ks_nb <- Ks_nb_nosigma * sigma2s.sq
+        Ks_nb_inv <- (1 / sigma2s.sq) * Ks_nb_inv_nosigma
 
         # Update sigma_eps2s
         a_eps2s_new <- a_eps2s + 0.5 * n
@@ -461,7 +478,7 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         sigma_eps2t <- sqrt(sigma_eps2t.sq)
 
         if (save_ypred) {
-            y_pred <- estimate(X, alpha, beta, Vs, Vt, a, b, c, d, eps1s, eps1t, eps2s, eps2t, r) # ?
+            y_pred <- estimate(X, alpha, beta, Vs, Vt, a, b, c, d, sigma_eps1s, sigma_eps1t, sigma_eps2s, sigma_eps2t, r)
         }
         # Store
         if ((i > burn) && (i %% thin == 0)) {
