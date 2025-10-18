@@ -1,10 +1,10 @@
 ---
-title: "Demonstration of ZINB_NNGP with Simulated Spatial-Temporal Data"
+title: "Demonstration of ZINB_GP with Simulated Spatial-Temporal Data"
 author: "Hsin-Hsiung Huang and Mahlon Scott"
 date: "March 07, 2025"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Demonstration of ZINB_NNGP with Simulated Spatial-Temporal Data}
+  %\VignetteIndexEntry{Demonstration of ZINB_GP with Simulated Spatial-Temporal Data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-This document demonstrates the use of the ZINB_NNGP function from the ZINB.GP package, which implements a Zero-Inflated Negative Binomial (ZINB) model with Nearest Neighbor Gaussian Processes (NNGP) for spatial-temporal data. The package is sourced from GitHub: KingJMS1/NNGP_ZINB_R. We will simulate spatial and temporal data, then apply the ZINB_NNGP function to model it.
+This document demonstrates the use of the ZINB_GP function from the ZINB.GP package, which implements a Zero-Inflated Negative Binomial (ZINB) model with Gaussian Processes (GP) for spatial-temporal data. The package is sourced from GitHub: KingJMS1/NNGP_ZINB_R. We will simulate spatial and temporal data, then apply the ZINB_GP function to model it.
 
 ## Loading Required Libraries
 
@@ -150,16 +150,16 @@ summary(y)
 hist(y, breaks = 30, main = "Histogram of Simulated ZINB Counts")
 ```
 
-## Running ZINB_NNGP
+## Running ZINB_GP
 
-Now, apply the ZINB_NNGP function to the simulated data.
+Now, apply the ZINB_GP function to the simulated data.
 
 ```{r}
 # Expanded coordinates for all observations (100 x 2)
 # (coords_st was already computed as the expanded grid)
 
 # Now call the function with observation-level covariance matrices:
-output <- ZINB_NNGP(
+output <- ZINB_GP(
   X = X,               # 100 x 2
   y = y,               # length 100
   coords = coords,  # 100 x 2 expanded coordinates
@@ -200,5 +200,5 @@ if (!is.null(output$Y_pred)) {
 
 ## Conclusion
 
-This demonstration showcased how to simulate spatial-temporal data and fit a ZINB model with NNGP using the ZINB_NNGP function. The simulated data included spatial and temporal effects, and the model accounted for zero-inflation and overdispersion. Users can extend this example by adjusting parameters, adding more covariates, or applying it to real data.
+This demonstration showcased how to simulate spatial-temporal data and fit a ZINB model with NNGP using the ZINB_GP function. The simulated data included spatial and temporal effects, and the model accounted for zero-inflation and overdispersion. Users can extend this example by adjusting parameters, adding more covariates, or applying it to real data.
 

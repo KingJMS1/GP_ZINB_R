@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Using ZINB.GP's ZINB_NNGP model
+# Using ZINB.GP's ZINB_GP model
 
 First, we import our package as well as some dependencies we will use to simulate the dataset.
 ```{r setup}
@@ -25,7 +25,7 @@ library(ZINB.GP)
 
 
 ## Generating a dataset
-We go through the full process to generate the dataset in an attempt to provide clarity on what the various matrix parameters passed into ZINB_NNGP are.
+We go through the full process to generate the dataset in an attempt to provide clarity on what the various matrix parameters passed into ZINB_GP are.
 
 ### Helper functions
 First we will define a few helper functions. The first will create Vs and Vt, the spatial and temporal design matrices. These will consit of indicator variables indicating at which point in space/time our data points are.
@@ -180,7 +180,7 @@ y[u == 1] <- rnbinom(N1, r, mu = mu[, 1]) # If at risk, draw from NB
 Now we are ready to run the model. This is done as follows:
 ```{r}
 # Run for a short time for demo purposes
-output <- ZINB_NNGP(X, y, coords, Vs, Vt, Ds, Dt, M = 10, 200, 100, 1, TRUE)
+output <- ZINB_GP(X, y, coords, Vs, Vt, Ds, Dt, M = 10, 200, 100, 1, TRUE)
 predictions <- output$Y_pred
 sim_alpha <- output$Alpha
 sim_beta <- output$Beta

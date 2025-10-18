@@ -352,8 +352,8 @@ display: none;
 </div>
 
 
-<div id="using-zinb.gps-zinb_nngp-model" class="section level1">
-<h1>Using ZINB.GP’s ZINB_NNGP model</h1>
+<div id="using-zinb.gps-ZINB_GP-model" class="section level1">
+<h1>Using ZINB.GP’s ZINB_GP model</h1>
 <p>First, we import our package as well as some dependencies we will use
 to simulate the dataset.</p>
 <pre class="r"><code>library(mvtnorm)
@@ -363,7 +363,7 @@ library(ZINB.GP)</code></pre>
 <h2>Generating a dataset</h2>
 <p>We go through the full process to generate the dataset in an attempt
 to provide clarity on what the various matrix parameters passed into
-ZINB_NNGP are.</p>
+ZINB_GP are.</p>
 <div id="helper-functions" class="section level3">
 <h3>Helper functions</h3>
 <p>First we will define a few helper functions. The first will create Vs
@@ -507,7 +507,7 @@ y[u == 1] &lt;- rnbinom(N1, r, mu = mu[, 1]) # If at risk, draw from NB</code></
 <h2>Running the model on the generated dataset</h2>
 <p>Now we are ready to run the model. This is done as follows:</p>
 <pre class="r"><code># Run for a short time for demo purposes
-output &lt;- ZINB_NNGP(X, y, coords, Vs, Vt, Ds, Dt, M = 10, 200, 100, 1, TRUE)
+output &lt;- ZINB_GP(X, y, coords, Vs, Vt, Ds, Dt, M = 10, 200, 100, 1, TRUE)
 predictions &lt;- output$Y_pred
 sim_alpha &lt;- output$Alpha
 sim_beta &lt;- output$Beta</code></pre>

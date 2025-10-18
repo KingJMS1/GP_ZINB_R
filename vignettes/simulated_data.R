@@ -145,7 +145,7 @@ y[u == 1] <- rnbinom(N1, r, mu = mu[, 1]) # If at risk, draw from NB
 #################
 # Run for a short time for demo purposes
 cat("Running Model\n")
-output <- ZINB_NNGP(X, y, coords, Vs, Vt, Ds, Dt, M = 10, 500, 100, 1, TRUE)
+output <- ZINB_GP(X, y, coords, Vs, Vt, Ds, Dt, M = 10, 500, 100, 1, TRUE)
 predictions <- output$Y_pred
 sim_alpha <- output$Alpha
 sim_beta <- output$Beta

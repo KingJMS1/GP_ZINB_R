@@ -84,7 +84,7 @@ gp_param_bounds <- function(Ds, Dt, tolerance = 1e-10) {
     return(list(ltmax=ltmax, lsmin=lsmin))
 }
 
-#' ZINB_NNGP
+#' ZINB_GP
 #' @description Run the ZINB NNGP model described in https://doi.org/10.1016/j.jspi.2023.106098.
 #'
 #' @param X Other Predictor variables
@@ -143,7 +143,7 @@ gp_param_bounds <- function(Ds, Dt, tolerance = 1e-10) {
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom stats runif
 #' @importFrom Matrix forceSymmetric
-ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE) {
+ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE) {
     # TODO: Break down the Gibbs sampling and test all steps independently
     # TODO: Remove the need to compute Ds, Dt manually, take in coords for both instead so you can NNGP with large datasets
 
