@@ -42,6 +42,48 @@ normalize <- function(A, eps=1e-8) {
     return((A / frobNorm) + diag(eps, nrow=nrow(A)))
 }
 
+#' gp_param_bounds
+#' @description Finds reasonable upper/lower bounds on gp parameters ensuring matrices remain pd invertible
+#' 
+#' @param Ds Spatial distance matrix
+#' @param Dt Temporal distance matrix
+#' @return Minimum values for l*s, maximum values for l*t 
+gp_param_bounds <- function(Ds, Dt, tolerance = 1e-10) {
+    smin <- 1
+    Ks <- exp(-Ds * smin)
+    err <- sqrt(sum(((solve(Ks) %*% Ks) - diag(1, nrow=nrow(Ks)))^2))
+    while(err < tolerance)
+    {
+        smin <- smin / 2
+        Ks <- exp(-Ds * smin)
+        err <- sqrt(sum(((solve(Ks) %*% Ks) - diag(1, nrow=nrow(Ks)))^2))
+    }
+    smin <- smin * 2
+    if (smin > 0.01)
+    {
+        stop("Ds causes ill-conditioned kernel matrix, try increasing distances between spatial coordinates, e.g. Ds <- 100 * Ds")
+    }
+    
+    tmin <- 1
+    Kt <- exp(-Dt * tmin)
+    err <- sqrt(sum(((solve(Kt) %*% Kt) - diag(1, nrow=nrow(Kt)))^2))
+    while(err < tolerance)
+    {
+        tmin <- tmin / 2
+        Kt <- exp(-Dt * tmin)
+        err <- sqrt(sum(((solve(Kt) %*% Kt) - diag(1, nrow=nrow(Kt)))^2))
+    }
+    tmin <- tmin * 2
+    if (tmin > 0.01)
+    {
+        stop("Dt casuses ill-conditioned kernel matrix, try increasing distances between temporal coordinates, e.g. Dt <- Dt * 100")
+    }
+    
+    ltmax <- 1 / tmin^2
+    lsmin <- smin
+    return(list(ltmax=ltmax, lsmin=lsmin))
+}
+
 #' ZINB_NNGP
 #' @description Run the ZINB NNGP model described in https://doi.org/10.1016/j.jspi.2023.106098.
 #'
@@ -113,6 +155,10 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
     p <- ncol(X) # dimension of alpha and beta
     n_time_points <- ncol(Vt)
 
+    max_loss <- 1e-8
+    param_bounds <- gp_param_bounds(Ds, Dt)
+    lsmin <- param_bounds$lsmin
+    ltmax <- param_bounds$ltmax
 
     ##########
     # Priors #
@@ -215,7 +261,8 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
     eps2t <- t(rmvnorm(n = 1, sigma = diag(sigma_eps2t^2, nrow = n_time_points)))
 
     # M-H proposals
-    sd_l <- 0.2 # l1t~normal(l1t,sd_l)
+    sd_l <- 2
+    sd_linv <- 2
 
     ############
     # Num Sims #
@@ -314,8 +361,8 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
 
         # update l1t, sigma1t
         # TODO: Remove restrictions like this.
-        l1t_star <- rnorm(1, l1t, sd_l)
-        if ((l1t_star < 5) && (l1t_star > 0)) {
+        l1t_star <- max(min(rnorm(1, l1t, sd_l), ltmax - 1), 1e-6)
+        if (TRUE) {
             Kt_bin_star <- sigma1t^2 * normalize(exp(-Dt / (l1t_star^2)))
             likelihood_l1t <- dmvnorm(b, mean = rep(0, n_time_points), sigma = Kt_bin_star, log = TRUE) -
                 dmvnorm(b, mean = rep(0, n_time_points), sigma = Kt_bin, log = TRUE)
@@ -342,10 +389,9 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         Kt_bin_inv <- Kt_bin_nosigma_inv * (1 / sigma1t.sq)
 
         # update phi_bin using M-H
-        phi_bin_star <- rnorm(1, l1s, 2) # proposal dist
+        phi_bin_star <- max(lsmin + 1e-8, rnorm(1, l1s, sd_linv)) # proposal dist
 
-        # TODO: Remove restrictions like this.
-        if ((phi_bin_star < 16) && (phi_bin_star > 0)) {
+        if (TRUE) {
             Ks_bin_star <- sigma1s^2 * normalize(exp(-phi_bin_star * Ds))
             likelihood_phi_bin <- dmvnorm(a, mean = rep(0, n), sigma = Ks_bin_star, log = TRUE) - dmvnorm(a, mean = rep(0, n), sigma = Ks_bin, log = TRUE)
             prior_phi_bin <- dgamma(x = phi_bin_star, shape = a_phi, rate = b_phi, log = TRUE) - dgamma(x = l1s, shape = a_phi, rate = b_phi, log = TRUE)
@@ -408,10 +454,10 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
         eps2t <- c(mvn_sample_svd(svd_vinv, m))
 
         # update l2t, sigma2t
-        l2t_star <- rnorm(1, l2t, sd_l)
+        l2t_star <- max(min(rnorm(1, l2t, sd_l), ltmax - 1), 1e-6)
 
         # TODO: Remove restrictions like this.
-        if ((l2t_star < 5) && (l2t_star > 0)) {
+        if (TRUE) {
             Kt_nb_star <- sigma2t^2 * normalize(exp(-Dt / (l2t_star^2)))
             likelihood_l2t <- dmvnorm(d, mean = rep(0, n_time_points), sigma = Kt_nb_star, log = TRUE) -
                 dmvnorm(d, mean = rep(0, n_time_points), sigma = Kt_nb, log = TRUE)
@@ -439,8 +485,9 @@ ZINB_NNGP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1
 
         # update l2s using M-H
         # TODO: Remove restrictions like this.
-        l2s_star <- rnorm(1, l2s, 1)
-        if ((l2s_star < 16) && (l2s_star > 0)) {
+        l2s_star <- max(rnorm(1, l2s, sd_linv), lsmin + 1e-8)
+
+        if (TRUE) {
             Ks_nb_star <- sigma2s^2 * normalize(exp(-l2s_star * Ds))
             likelihood_phi_nb <- dmvnorm(c, mean = rep(0, n), sigma = Ks_nb_star, log = TRUE) -
                 dmvnorm(c, mean = rep(0, n), sigma = Ks_nb, log = TRUE)
