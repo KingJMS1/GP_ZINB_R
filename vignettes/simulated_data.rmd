@@ -62,8 +62,8 @@ make_spatial_effects <- function(phi_nb, phi_bin, sigma_bin_s, sigma_nb_s, coord
     # Spatial Random Effects #
     ##########################
     Ds <- as.matrix(dist(coords))
-    Ks_bin <- sigma_bin_s^2 * exp(-phi_bin * Ds)
-    Ks_nb <- sigma_nb_s^2 * exp(-phi_nb * Ds)
+    Ks_bin <- sigma_bin_s^2 * exp(-phi_bin * (Ds^2))
+    Ks_nb <- sigma_nb_s^2 * exp(-phi_nb * (Ds^2))
     a <- t(rmvnorm(n = 1, sigma = Ks_bin))
     c <- t(rmvnorm(n = 1, sigma = Ks_nb))
 
@@ -77,8 +77,8 @@ make_temporal_effects <- function(l1t, l2t, sigma1t, sigma2t, n_time_points) {
     w <- matrix(1:n_time_points, ncol = 1)
     Dt <- as.matrix(dist(w))
     
-    Kt_bin <- sigma1t^2 * exp(-Dt / (l1t^2))
-    Kt_nb <- sigma2t^2 * exp(-Dt / (l2t^2))
+    Kt_bin <- sigma1t^2 * exp(-(Dt^2) / (l1t^2))
+    Kt_nb <- sigma2t^2 * exp(-(Dt^2) / (l2t^2))
     
     b <- t(rmvnorm(n = 1, sigma = Kt_bin))
     d <- t(rmvnorm(n = 1, sigma = Kt_nb))

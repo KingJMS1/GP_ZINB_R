@@ -33,13 +33,12 @@ mvn_sample_svd <- function(P_svd, mu, entropy = NULL, threshold = 1e-12) {
 }
 
 #' normalize
-#' @description Normalize a (square) matrix to have frobenius norm 1, then add a small term to its diagonal
+#' @description Add a small term to the diagonal, may be used in future to do Singular Value Thresholding, etc.
 #' 
 #' @param A Matrix to normalize (square)
 #' @param eps Term to add to diagonal
 normalize <- function(A, eps=1e-8) {
-    frobNorm <- sqrt(sum(A*A))
-    return((A / frobNorm) + diag(eps, nrow=nrow(A)))
+    return(A + diag(eps, nrow=nrow(A)))
 }
 
 #' gp_param_bounds
@@ -154,6 +153,10 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
     N <- nrow(X) # number of observations
     p <- ncol(X) # dimension of alpha and beta
     n_time_points <- ncol(Vt)
+
+    # Use squared exponential kernel
+    Ds <- Ds * Ds
+    Dt <- Dt * Dt
 
     max_loss <- 1e-8
     param_bounds <- gp_param_bounds(Ds, Dt)
