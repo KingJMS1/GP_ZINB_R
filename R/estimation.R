@@ -1,21 +1,16 @@
 #' estimate
 #' @description Draw y from posterior distribution
-estimate <- function(X, alpha, beta, Vs, Vt, a, b, c, d, sigma_eps1s, sigma_eps1t, sigma_eps2s, sigma_eps2t, r) {
+estimate <- function(X, alpha, beta, Vs, Vt, a, b, c, d, r) {
     N <- nrow(X)
     
-    # Draw new epsilon for new predictions of new observations
-    eps1s <- rnorm(ncol(Vs), mean = 0, sd = sigma_eps1s)
-    eps1t <- rnorm(ncol(Vt), mean = 0, sd = sigma_eps1t)
-    eps2s <- rnorm(ncol(Vs), mean = 0, sd = sigma_eps2s)
-    eps2t <- rnorm(ncol(Vt), mean = 0, sd = sigma_eps2t)
-    
-    eta1 <- X %*% alpha + Vs %*% (a + eps1s) + Vt %*% (b + eps1t)
+    # Calculate etas
+    eta1 <- X %*% alpha + Vs %*% a + Vt %*% b
     p_at_risk <- sigmoid(eta1) # at-risk probability
     u <- rbinom(N, 1, p_at_risk) # at-risk indicator
     if (ncol(X) == 1) {
-        eta2 <- X[u == 1, ] * beta + Vs[u == 1, ] %*% c + Vt[u == 1, ] %*% d + Vs[u == 1, ] %*% eps2s + Vt[u == 1, ] %*% eps2t # Linear predictor for count part
+        eta2 <- X[u == 1, ] * beta + Vs[u == 1, ] %*% c + Vt[u == 1, ] %*% d # Linear predictor for count part
     } else {
-        eta2 <- X[u == 1, ] %*% beta + Vs[u == 1, ] %*% (c + eps2s) + Vt[u == 1, ] %*% (d + eps2t) # Linear predictor for count part
+        eta2 <- X[u == 1, ] %*% beta + Vs[u == 1, ] %*% c + Vt[u == 1, ] %*% d # Linear predictor for count part
     }
     psi <- sigmoid(eta2) # Prob of success
     mu <- r * psi / (1 - psi) # NB mean
