@@ -318,7 +318,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         }
 
         # update l1t, sigma1t, noise_ratio_t1
-        out <- update_ls_sigma_noise(l1t, sigma1t, noise_ratio_t1, b, Kt_bin, Dt, ltPrior, sigmaPrior)
+        out <- update_ls_sigma_noise(l1t, sigma1t, noise_ratio_t1, b, Kt_bin, Dt, ltPrior, sigmaPrior, noisePrior)
         l1t <- out$ls
         sigma1t <- out$sigma
         noise_ratio_t1 <- out$noise_ratio
@@ -326,7 +326,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         Kt_bin_inv <- out$K_inv
 
         # update l1s, sigma1s, noise_ratio_s1
-        out <- update_ls_sigma_noise(l1s, sigma1s, noise_ratio_s1, a, Ks_bin, Ds, lsPrior, sigmaPrior)
+        out <- update_ls_sigma_noise(l1s, sigma1s, noise_ratio_s1, a, Ks_bin, Ds, lsPrior, sigmaPrior, noisePrior)
         l1s <- out$ls
         sigma1s <- out$sigma
         noise_ratio_s1 <- out$noise_ratio
@@ -347,7 +347,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         d <- betacd[-(1:(p + n))]
 
         # update l2t, sigma2t, noise_ratio_t2
-        out <- update_ls_sigma_noise(l2t, sigam2t, noise_ratio_t2, d, Kt_nb, Dt, ltPrior, sigmaPrior)
+        out <- update_ls_sigma_noise(l2t, sigam2t, noise_ratio_t2, d, Kt_nb, Dt, ltPrior, sigmaPrior, noisePrior)
         l2t <- out$ls
         sigma2t <- out$sigma
         noise_ratio_t2 <- out$noise_ratio
@@ -355,7 +355,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         Kt_nb_inv <- out$K_inv
 
         # update l2s, sigma2s, noise_ratio_s2
-        out <- update_ls_sigma_noise(l2s, sigma2s, noise_ratio_s2, c, Ks_nb, Ds, lsPrior, sigmaPrior)
+        out <- update_ls_sigma_noise(l2s, sigma2s, noise_ratio_s2, c, Ks_nb, Ds, lsPrior, sigmaPrior, noisePrior)
         l2s <- out$ls
         sigma2s <- out$sigma
         noise_ratio_s2 <- out$noise_ratio
