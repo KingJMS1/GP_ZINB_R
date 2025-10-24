@@ -5,7 +5,7 @@ if (length(args) != 1)
 {
     stop("Must provide rep number I am responsible for.", call. = FALSE)
 }
-repNum <- as.integer(args[1])
+repNum <- as.integer(args[1]) + 1
 
 # Load: X, y, coords, Vs, Vt, Ds, Dt, u, a, b, c, d
 obs_nums <- c(2, 4, 8, 16, 24, 32, 48, 64)
