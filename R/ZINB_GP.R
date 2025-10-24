@@ -3,6 +3,7 @@
 #' 
 #' @param A Matrix to normalize (square)
 #' @param noise_ratio Noise mixing ratio
+#' @export 
 noise_mix <- function(A, noise_ratio) {
     return(noise_ratio * A + diag(1 - noise_ratio, nrow=nrow(A)))
 }
@@ -12,6 +13,7 @@ noise_mix <- function(A, noise_ratio) {
 #' 
 #' @param dist Distance matrix
 #' @param ls length scale
+#' @export 
 kern <- function(dist, ls) {
     return(exp(-dist / (ls^2)))
 }
@@ -26,7 +28,7 @@ kern <- function(dist, ls) {
 #' @param gpdraw Last draw from the gp with these parameters
 #' @param K Current kernel matrix
 #' @param D Distance matrix
-#' @param lsprior prior information for length scale, needs mh_sd, max, a, b
+#' @param lsPrior prior information for length scale, needs mh_sd, max, a, b
 #' @param sigmaPrior prior information for sigma, needs a, b
 #' @param noisePrior prior information for noise_ratio, needs mh_sd, a, b
 #' #' @return A List of the following sampled values:          
@@ -38,12 +40,12 @@ kern <- function(dist, ls) {
 #'      \item {\strong{K_inv:} } {Inverse of kernel matrix}
 #' }
 #' @importFrom stats dgamma
-#' @improtFrom stats dbeta
+#' @importFrom stats dbeta
 #' @importFrom stats runif
 #' @importFrom mvtnorm dmvnorm
 update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior, sigmaPrior, noisePrior) {
     # update ls
-    proposal <- max(min(rnorm(1, ls, lsprior$mh_sd), lsprior$max - 1), 1e-6)
+    proposal <- max(min(rnorm(1, ls, lsPrior$mh_sd), lsPrior$max - 1), 1e-6)
     if (TRUE) {
         K_star <- sigma^2 * noise_mix(kern(D, proposal), noise_ratio)
         
@@ -52,8 +54,8 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
             dmvnorm(gpdraw, mean = rep(0, length(gpdraw)), sigma = K, log = TRUE)
         
         # Calculate prior likelihood
-        prior_ls <- dgamma(x = proposal, shape = lsprior$a, rate = lsprior$b, log = TRUE) -
-            dgamma(x = ls, shape = lsprior$a, rate = lsprior$b, log = TRUE)
+        prior_ls <- dgamma(x = proposal, shape = lsPrior$a, rate = lsPrior$b, log = TRUE) -
+            dgamma(x = ls, shape = lsPrior$a, rate = lsPrior$b, log = TRUE)
         
         posterior_ls <- likelihood_ls + prior_ls
 
@@ -89,9 +91,9 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 
     ## update sigma1t
     K_nosigma <- noise_mix(kern(D, ls^2), noise_ratio)
-    K_nosigma_inv <- forceSymmetric(solve(Kt_bin_nosigma))
+    K_nosigma_inv <- forceSymmetric(solve(K_nosigma))
     a_new <- sigmaPrior$a + 0.5 * length(gpdraw)
-    b_new <- sigmaPrior$b + 0.5 * (t(gpdraw) %*% K_nosigma %*% gpdraw)
+    b_new <- sigmaPrior$b + 0.5 * (t(gpdraw) %*% K_nosigma_inv %*% gpdraw)
     sigma.sq <- rinvgamma(n = 1, shape = a_new, scale = b_new[1,1])
     sigma <- sqrt(sigma.sq)
 
@@ -227,7 +229,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
     # Spatial Random Effects #
     ##########################
     l1s <- l2s <- 1
-    sigma1s <- sigma2s <- sqrt(b_sigmas / (a_sigmas - 1))
+    sigma1s <- sigma2s <- 2
     Ks_bin <- sigma1s^2 * noise_mix(kern(Ds, l1s), noise_ratio_s1)
     Ks_bin_inv <- forceSymmetric(solve(Ks_bin))
     Ks_nb <- sigma2s^2 * noise_mix(kern(Ds, l2s), noise_ratio_s2)
@@ -238,7 +240,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
     #################
     # Temporal Random Effects #
     #################
-    sigma1t <- sigma2t <- sqrt(b_sigmat / (a_sigmat - 1))
+    sigma1t <- sigma2t <- 2
     l1t <- l2t <- 1
     Kt_bin <- sigma1t^2 * noise_mix(kern(Dt, l1t), noise_ratio_t1)
     Kt_bin_inv <- forceSymmetric(solve(Kt_bin))
@@ -330,7 +332,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         l1s <- out$ls
         sigma1s <- out$sigma
         noise_ratio_s1 <- out$noise_ratio
-        Ks_bin <- out_K
+        Ks_bin <- out$K
         Ks_bin_inv <- out$K_inv
 
         # Update beta
@@ -347,7 +349,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         d <- betacd[-(1:(p + n))]
 
         # update l2t, sigma2t, noise_ratio_t2
-        out <- update_ls_sigma_noise(l2t, sigam2t, noise_ratio_t2, d, Kt_nb, Dt, ltPrior, sigmaPrior, noisePrior)
+        out <- update_ls_sigma_noise(l2t, sigma2t, noise_ratio_t2, d, Kt_nb, Dt, ltPrior, sigmaPrior, noisePrior)
         l2t <- out$ls
         sigma2t <- out$sigma
         noise_ratio_t2 <- out$noise_ratio

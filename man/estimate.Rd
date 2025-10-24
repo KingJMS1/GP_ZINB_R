@@ -4,22 +4,7 @@
 \alias{estimate}
 \title{estimate}
 \usage{
-estimate(
-  X,
-  alpha,
-  beta,
-  Vs,
-  Vt,
-  a,
-  b,
-  c,
-  d,
-  sigma_eps1s,
-  sigma_eps1t,
-  sigma_eps2s,
-  sigma_eps2t,
-  r
-)
+estimate(X, alpha, beta, Vs, Vt, a, b, c, d, r)
 }
 \description{
 Draw y from posterior distribution
