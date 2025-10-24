@@ -64,6 +64,7 @@ dir.create("simulations", showWarnings = FALSE)
 obs_nums <- c(2, 4, 8, 16, 24, 32, 48, 64)
 for (obs_num in obs_nums)
 {
+    cat(paste("\nStarting: ", obs_num, "\n"))
     for (kk in 1:100)
     {
         #################
