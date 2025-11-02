@@ -18,6 +18,17 @@ kern <- function(dist, ls) {
     return(exp(-dist / (ls^2)))
 }
 
+#' nullcheck
+#' @description Returns default if value is null
+#' 
+#' @param value Nullable
+#' @param default Default value
+nullcheck <- function(value, default) {
+    if (is.null(value)) {
+        return(default)
+    }
+    return(value)
+}
 
 #' update_ls_sigma_noise
 #' @description Update kernel parameters for a GP
@@ -43,9 +54,12 @@ kern <- function(dist, ls) {
 #' @importFrom stats dbeta
 #' @importFrom stats runif
 #' @importFrom mvtnorm dmvnorm
+#' @importFrom msm rtnorm
+#' @importFrom msm dtnorm
 update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior, sigmaPrior, noisePrior) {
     # update ls
-    proposal <- max(min(rnorm(1, ls, lsPrior$mh_sd), lsPrior$max - 1), 1e-6)
+    # Consider using exponential proposals instead
+    proposal <- rtnorm(1, mean = ls, sd = lsPrior$mh_sd, lower = 1e-6, upper = lsPrior$max) #max(min(rnorm(1, ls, lsPrior$mh_sd), lsPrior$max - 1), 1e-6)
     if (TRUE) {
         K_star <- sigma^2 * noise_mix(kern(D, proposal), noise_ratio)
         
@@ -57,7 +71,11 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
         prior_ls <- dgamma(x = proposal, shape = lsPrior$a, rate = lsPrior$b, log = TRUE) -
             dgamma(x = ls, shape = lsPrior$a, rate = lsPrior$b, log = TRUE)
         
-        posterior_ls <- likelihood_ls + prior_ls
+        # Calculate transition probabilities
+        trans_ls <- dtnorm(x = ls, mean = proposal, sd = lsPrior$mh_sd, lower = 1e-6, upper = lsPrior$max, log = 1) - 
+            dtnorm(x = proposal, mean = ls, sd = lsPrior$mh_sd, lower = 1e-6, upper = lsPrior$max, log = 1)
+
+        posterior_ls <- likelihood_ls + prior_ls + trans_ls
 
         if (!is.na(posterior_ls)) {
             if (log(runif(1)) < posterior_ls) {
@@ -68,7 +86,8 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
     }
     
     # Update noise ratio
-    proposal <- max(min(rnorm(1, noise_ratio, noisePrior$mh_sd), 1 - 1e-7), 0 + 1e-7)
+    eps_nr <- 0.005
+    proposal <- rtnorm(1, mean = noise_ratio, sd = noisePrior$mh_sd, lower = eps_nr, upper = 1 - eps_nr) #max(min(rnorm(1, noise_ratio, noisePrior$mh_sd), 1 - 1e-7), 0 + 1e-7)
     if (TRUE) {
         K_star <- sigma^2 * noise_mix(kern(D, ls), proposal)
         
@@ -79,8 +98,12 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
         # Calculate prior likelihood
         prior_nr <- dbeta(x = proposal, shape1 = noisePrior$a, shape2 = noisePrior$b, log = TRUE) -
             dbeta(x = ls, shape1 = noisePrior$a, shape2 = noisePrior$b, log = TRUE)
-        
-        posterior_nr <- likelihood_nr + prior_nr
+
+        # Calculate transition probabilities
+        trans_ls <- dtnorm(x = noise_ratio, mean = proposal, sd = noisePrior$mh_sd, lower = eps_nr, upper = 1 - eps_nr, log = 1) - 
+            dtnorm(x = proposal, mean = noise_ratio, sd = noisePrior$mh_sd, lower = eps_nr, upper = 1 - eps_nr, log = 1)
+
+        posterior_nr <- likelihood_nr + prior_nr + trans_ls
 
         if (!is.na(posterior_nr)) {
             if (log(runif(1)) < posterior_nr) {
@@ -89,7 +112,7 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
         }
     }
 
-    ## update sigma1t
+    # update sigma1t, kernel matrices
     K_nosigma <- noise_mix(kern(D, ls^2), noise_ratio)
     K_nosigma_inv <- forceSymmetric(solve(K_nosigma))
     a_new <- sigmaPrior$a + 0.5 * length(gpdraw)
@@ -152,17 +175,21 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom stats runif
 #' @importFrom Matrix forceSymmetric
-ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE) {
+ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE, ltPrior = NULL, lsPrior = NULL, sigmaPrior = NULL, noisePrior = NULL, mh_sd_r = NULL) {
     # TODO: Break down the Gibbs sampling and test all steps independently
     # TODO: Remove the need to compute Ds, Dt manually, take in coords for both instead so you can NNGP with large datasets
 
     # X is the design matrix with dimension N*p
     # x is the vector with length N
     # y is the count response with length N
-    n <- nrow(coords) # number of clusters
+    n <- nrow(coords) - 1 # number of clusters
     N <- nrow(X) # number of observations
     p <- ncol(X) # dimension of alpha and beta
     n_time_points <- ncol(Vt)
+
+    # Sacrifice to the intercept gods
+    Ds <- Ds[2:nrow(Ds), 2:ncol(Ds)]
+    Dt <- Dt[2:nrow(Dt), 2:ncol(Dt)]
 
     # Use squared exponential kernel
     Ds <- Ds * Ds
@@ -179,13 +206,13 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
 
     ####### priors for alpha and beta ######
     T0a <- T0b <- diag(100, p)
-    sd_r <- 0.02 # TODO: Why so low.
-
+    sd_r <- nullcheck(mh_sd_r, 0.4)
+    
     ####### kernel hyperparameters  ######
-    ltPrior <- list(max=ltmax, mh_sd=3, a=1, b=0.001)
-    lsPrior <- list(max=lsmax, mh_sd=3, a=1, b=0.001)
-    sigmaPrior <- list(a=0.01, b=0.1)
-    noisePrior <- list(a=1.5, b=1.5, mh_sd=0.05)
+    ltPrior <- nullcheck(ltPrior, list(max=ltmax, mh_sd=3, a=1, b=0.001))
+    lsPrior <- nullcheck(lsPrior, list(max=lsmax, mh_sd=3, a=1, b=0.001))
+    sigmaPrior <- nullcheck(sigmaPrior, list(a=0.01, b=0.1))
+    noisePrior <- nullcheck(noisePrior, list(a=1.5, b=1.5, mh_sd=0.2))
 
     # Model init
     r <- 1

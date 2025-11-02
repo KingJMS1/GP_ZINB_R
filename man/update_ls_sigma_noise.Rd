@@ -29,6 +29,8 @@ update_ls_sigma_noise(
 
 \item{D}{Distance matrix}
 
+\item{lsPrior}{prior information for length scale, needs mh_sd, max, a, b}
+
 \item{sigmaPrior}{prior information for sigma, needs a, b}
 
 \item{noisePrior}{prior information for noise_ratio, needs mh_sd, a, b
@@ -40,8 +42,6 @@ update_ls_sigma_noise(
 \item {\strong{K:} } {Kernel matrix}
 \item {\strong{K_inv:} } {Inverse of kernel matrix}
 }}
-
-\item{lsprior}{prior information for length scale, needs mh_sd, max, a, b}
 }
 \description{
 Update kernel parameters for a GP

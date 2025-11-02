@@ -23,6 +23,10 @@ make_y_Vs_Vt <- function(obs_matrix) {
     Vt <- as.matrix(sparseMatrix(i = 1:N, j = rep(1:n_temporal, each=n_spatial), x=rep(1, N)))
     Vs <- as.matrix(sparseMatrix(i = 1:N, j = rep(1:n_spatial, n_temporal), x=rep(1,N)))
 
+    # Sacrifice to the intercept gods
+    Vt <- Vt[,2:ncol(Vt)]
+    Vs <- Vs[,2:ncol(Vs)]
+
     return(list(Vs=Vs, Vt=Vt, y=y))
 }
 
@@ -61,7 +65,7 @@ gp_param_bounds <- function(Ds, Dt, tolerance = 1e-10) {
         stop("Dt casuses ill-conditioned kernel matrix, try increasing distances between temporal coordinates, e.g. Dt <- Dt * 100")
     }
     
-    ltmax <- 1 / tmin^2
-    lsmax <- 1 / smin^2
+    ltmax <- sqrt(1 / tmin)
+    lsmax <- sqrt(1 / smin)
     return(list(ltmax=ltmax, lsmax=lsmax))
 }

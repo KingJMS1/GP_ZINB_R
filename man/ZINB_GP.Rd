@@ -18,7 +18,12 @@ ZINB_GP(
   thin = 1,
   save_ypred = FALSE,
   print_iter = 100,
-  print_progress = FALSE
+  print_progress = FALSE,
+  ltPrior = NULL,
+  lsPrior = NULL,
+  sigmaPrior = NULL,
+  noisePrior = NULL,
+  mh_sd_r = NULL
 )
 }
 \arguments{

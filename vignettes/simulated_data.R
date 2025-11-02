@@ -68,7 +68,7 @@ num_spatial <- 30
 num_temporal <- 10
 
 # Get Spatial and temporal design matrices, and total number of observations
-out <- make_Vs_Vt(num_spatial, num_temporal, 50)
+out <- make_Vs_Vt(num_spatial, num_temporal, 20)
 Vs <- out$Vs
 Vt <- out$Vt
 N  <- out$N
