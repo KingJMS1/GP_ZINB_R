@@ -40,6 +40,7 @@ make_y_Vs_Vt <- function(obs_matrix) {
 gp_param_bounds <- function(Ds, Dt, tolerance = 1e-10) {
     smin <- 1
     Ks <- exp(-Ds * smin)
+    # TODO: Add try catch to solve for better error messages
     err <- sqrt(sum(((solve(Ks) %*% Ks) - diag(1, nrow=nrow(Ks)))^2))
     while(err < tolerance) {
         smin <- smin / 2
