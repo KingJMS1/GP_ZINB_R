@@ -4,7 +4,7 @@
 \alias{gp_param_bounds}
 \title{gp_param_bounds}
 \usage{
-gp_param_bounds(Ds, Dt, tolerance = 1e-10)
+gp_param_bounds(Ds, Dt, kernel, tolerance = 1e-10)
 }
 \arguments{
 \item{Ds}{Spatial distance matrix}

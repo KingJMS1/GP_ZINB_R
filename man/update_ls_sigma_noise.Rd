@@ -13,7 +13,8 @@ update_ls_sigma_noise(
   D,
   lsPrior,
   sigmaPrior,
-  noisePrior
+  noisePrior,
+  kern
 )
 }
 \arguments{

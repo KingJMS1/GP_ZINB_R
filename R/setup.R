@@ -37,14 +37,14 @@ make_y_Vs_Vt <- function(obs_matrix) {
 #' @param Ds Spatial distance matrix
 #' @param Dt Temporal distance matrix
 #' @return Minimum values for l*s, maximum values for l*t 
-gp_param_bounds <- function(Ds, Dt, tolerance = 1e-10) {
+gp_param_bounds <- function(Ds, Dt, kernel, tolerance = 1e-10) {
     smin <- 1
-    Ks <- exp(-Ds * smin)
+    Ks <- kernel(Ds, 1 / smin)
     # TODO: Add try catch to solve for better error messages
     err <- sqrt(sum(((solve(Ks) %*% Ks) - diag(1, nrow=nrow(Ks)))^2))
     while(err < tolerance) {
         smin <- smin / 2
-        Ks <- exp(-Ds * smin)
+        Ks <- kernel(Ds, 1 / smin)
         err <- sqrt(sum(((solve(Ks) %*% Ks) - diag(1, nrow=nrow(Ks)))^2))
     }
     smin <- smin * 2
@@ -53,12 +53,12 @@ gp_param_bounds <- function(Ds, Dt, tolerance = 1e-10) {
     }
     
     tmin <- 1
-    Kt <- exp(-Dt * tmin)
+    Kt <- kernel(Dt, 1 / tmin)
     err <- sqrt(sum(((solve(Kt) %*% Kt) - diag(1, nrow=nrow(Kt)))^2))
     while(err < tolerance)
     {
         tmin <- tmin / 2
-        Kt <- exp(-Dt * tmin)
+        Kt <- kernel(Dt, 1 / tmin)
         err <- sqrt(sum(((solve(Kt) %*% Kt) - diag(1, nrow=nrow(Kt)))^2))
     }
     tmin <- tmin * 2
@@ -66,7 +66,7 @@ gp_param_bounds <- function(Ds, Dt, tolerance = 1e-10) {
         stop("Dt casuses ill-conditioned kernel matrix, try increasing distances between temporal coordinates, e.g. Dt <- Dt * 100")
     }
     
-    ltmax <- sqrt(1 / tmin)
-    lsmax <- sqrt(1 / smin)
+    ltmax <- (1 / tmin)
+    lsmax <- (1 / smin)
     return(list(ltmax=ltmax, lsmax=lsmax))
 }

@@ -12,7 +12,6 @@ ZINB_GP(
   Vt,
   Ds,
   Dt,
-  M = 10,
   nsim,
   burn,
   thin = 1,
@@ -23,7 +22,8 @@ ZINB_GP(
   lsPrior = NULL,
   sigmaPrior = NULL,
   noisePrior = NULL,
-  mh_sd_r = NULL
+  mh_sd_r = NULL,
+  kern = NULL
 )
 }
 \arguments{
@@ -41,8 +41,6 @@ ZINB_GP(
 
 \item{Dt}{Temporal distance matirx, diagonal should be 0, off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel}
 
-\item{M}{How many neighbors to allow in the spatial NNGP algorithm, defaults to 10.}
-
 \item{nsim}{How long to run MCMC in total, must be greater than burn.}
 
 \item{burn}{How long to run MCMC before saving samples.}
@@ -54,6 +52,8 @@ ZINB_GP(
 \item{print_iter}{How often to print the iteration number of the MCMC chain.}
 
 \item{print_progress}{Whether or not to print the iteration number of the MCMC chain.}
+
+\item{M}{How many neighbors to allow in the spatial NNGP algorithm, defaults to 10.}
 }
 \value{
 A List of the following sampled values:

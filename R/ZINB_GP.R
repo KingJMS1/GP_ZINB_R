@@ -8,13 +8,13 @@ noise_mix <- function(A, noise_ratio) {
     return(noise_ratio * A + diag(1 - noise_ratio, nrow=nrow(A)))
 }
 
-#' kern
-#' @description Create the kernel matrix e^(-dist / (ls^2))
+#' kernel
+#' @description Create the squared exponential kernel matrix e^(-dist / (ls^2))
 #' 
 #' @param dist Distance matrix
 #' @param ls length scale
 #' @export 
-kern <- function(dist, ls) {
+kernel <- function(dist, ls) {
     return(exp(-dist / (ls^2)))
 }
 
@@ -56,7 +56,7 @@ nullcheck <- function(value, default) {
 #' @importFrom mvtnorm dmvnorm
 #' @importFrom msm rtnorm
 #' @importFrom msm dtnorm
-update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior, sigmaPrior, noisePrior) {
+update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior, sigmaPrior, noisePrior, kern) {
     # update ls
     # Consider using exponential proposals instead
     proposal <- rtnorm(1, mean = ls, sd = lsPrior$mh_sd, lower = 1e-6, upper = lsPrior$max) #max(min(rnorm(1, ls, lsPrior$mh_sd), lsPrior$max - 1), 1e-6)
@@ -175,7 +175,7 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom stats runif
 #' @importFrom Matrix forceSymmetric
-ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE, ltPrior = NULL, lsPrior = NULL, sigmaPrior = NULL, noisePrior = NULL, mh_sd_r = NULL) {
+ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE, ltPrior = NULL, lsPrior = NULL, sigmaPrior = NULL, noisePrior = NULL, mh_sd_r = NULL, kern = NULL) {
     # TODO: Break down the Gibbs sampling and test all steps independently
     # TODO: Remove the need to compute Ds, Dt manually, take in coords for both instead so you can NNGP with large datasets
 
@@ -191,12 +191,13 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
     Ds <- Ds[2:nrow(Ds), 2:ncol(Ds)]
     Dt <- Dt[2:nrow(Dt), 2:ncol(Dt)]
 
-    # Use squared exponential kernel
+    # Use squared distances
     Ds <- Ds * Ds
     Dt <- Dt * Dt
 
     # Find reasonable bounds for GP length scales
-    param_bounds <- gp_param_bounds(Ds, Dt)
+    kern <- nullcheck(kern, kernel)
+    param_bounds <- gp_param_bounds(Ds, Dt, kern)
     lsmax <- param_bounds$lsmax
     ltmax <- param_bounds$ltmax
 
@@ -347,7 +348,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         }
 
         # update l1t, sigma1t, noise_ratio_t1
-        out <- update_ls_sigma_noise(l1t, sigma1t, noise_ratio_t1, b, Kt_bin, Dt, ltPrior, sigmaPrior, noisePrior)
+        out <- update_ls_sigma_noise(l1t, sigma1t, noise_ratio_t1, b, Kt_bin, Dt, ltPrior, sigmaPrior, noisePrior, kern)
         l1t <- out$ls
         sigma1t <- out$sigma
         noise_ratio_t1 <- out$noise_ratio
@@ -355,7 +356,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         Kt_bin_inv <- out$K_inv
 
         # update l1s, sigma1s, noise_ratio_s1
-        out <- update_ls_sigma_noise(l1s, sigma1s, noise_ratio_s1, a, Ks_bin, Ds, lsPrior, sigmaPrior, noisePrior)
+        out <- update_ls_sigma_noise(l1s, sigma1s, noise_ratio_s1, a, Ks_bin, Ds, lsPrior, sigmaPrior, noisePrior, kern)
         l1s <- out$ls
         sigma1s <- out$sigma
         noise_ratio_s1 <- out$noise_ratio
@@ -376,7 +377,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         d <- betacd[-(1:(p + n))]
 
         # update l2t, sigma2t, noise_ratio_t2
-        out <- update_ls_sigma_noise(l2t, sigma2t, noise_ratio_t2, d, Kt_nb, Dt, ltPrior, sigmaPrior, noisePrior)
+        out <- update_ls_sigma_noise(l2t, sigma2t, noise_ratio_t2, d, Kt_nb, Dt, ltPrior, sigmaPrior, noisePrior, kern)
         l2t <- out$ls
         sigma2t <- out$sigma
         noise_ratio_t2 <- out$noise_ratio
@@ -384,7 +385,7 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, M = 10, nsim, burn, thin = 1, 
         Kt_nb_inv <- out$K_inv
 
         # update l2s, sigma2s, noise_ratio_s2
-        out <- update_ls_sigma_noise(l2s, sigma2s, noise_ratio_s2, c, Ks_nb, Ds, lsPrior, sigmaPrior, noisePrior)
+        out <- update_ls_sigma_noise(l2s, sigma2s, noise_ratio_s2, c, Ks_nb, Ds, lsPrior, sigmaPrior, noisePrior, kern)
         l2s <- out$ls
         sigma2s <- out$sigma
         noise_ratio_s2 <- out$noise_ratio
