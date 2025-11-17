@@ -22,11 +22,6 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/HuangExplanation.html">Demonstration of ZINB_GP with Simulated Spatial-Temporal Data</a></li>
-    <li><a class="dropdown-item" href="../articles/simulated_data.html">A Simple Simulation</a></li>
-  </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -56,13 +51,18 @@
 <span>  <span class="va">Vt</span>,</span>
 <span>  <span class="va">Ds</span>,</span>
 <span>  <span class="va">Dt</span>,</span>
-<span>  M <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  <span class="va">nsim</span>,</span>
 <span>  <span class="va">burn</span>,</span>
 <span>  thin <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  save_ypred <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  print_iter <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>  print_progress <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  print_progress <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ltPrior <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lsPrior <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sigmaPrior <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  noisePrior <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  mh_sd_r <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  kern <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -98,10 +98,6 @@
 <dd><p>Temporal distance matirx, diagonal should be 0, off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel</p></dd>
 
 
-<dt id="arg-m">M<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>How many neighbors to allow in the spatial NNGP algorithm, defaults to 10.</p></dd>
-
-
 <dt id="arg-nsim">nsim<a class="anchor" aria-label="anchor" href="#arg-nsim"></a></dt>
 <dd><p>How long to run MCMC in total, must be greater than burn.</p></dd>
 
@@ -125,6 +121,10 @@
 <dt id="arg-print-progress">print_progress<a class="anchor" aria-label="anchor" href="#arg-print-progress"></a></dt>
 <dd><p>Whether or not to print the iteration number of the MCMC chain.</p></dd>
 
+
+<dt id="arg-m">M<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
+<dd><p>How many neighbors to allow in the spatial NNGP algorithm, defaults to 10.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -134,10 +134,6 @@
 <li><p><strong>B:</strong>  Portion of temporal random effect in the logit model explained by kernel</p></li>
 <li><p><strong>C:</strong>  Portion of spatial random effect in the NB model explained by kernel</p></li>
 <li><p><strong>D:</strong>  Portion of temporal random effect in the NB model explained by kernel</p></li>
-<li><p><strong>Eps1s:</strong>  Portion of spatial random effect in the logit model explained by noise</p></li>
-<li><p><strong>Eps2s:</strong>  Portion of spatial random effect in the NB model explained by noise</p></li>
-<li><p><strong>Eps1t:</strong>  Portion of temporal random effect in the logit model explained by noise</p></li>
-<li><p><strong>Eps2t:</strong>  Portion of temporal random effect in the NB model explained by noise</p></li>
 <li><p><strong>L1t:</strong>  Length scale for temporal kernel in logit model, i.e.  \(e^{-\frac{d^{2}}{2 l_{1t}^{2}}}\)</p></li>
 <li><p><strong>Sigma1t:</strong>  Kernel scale parameter for above kernel, i.e.  \(\sigma_{1t}^{2}e^{.}\)</p></li>
 <li><p><strong>L2t:</strong>  Length scale for temporal kernel in NB model, i.e.  \(e^{-\frac{d^{2}}{2 l_{1t}^{2}}}\)</p></li>
@@ -146,10 +142,6 @@
 <li><p><strong>Sigma1s:</strong>  Square root of multiplier for spatial kernel in logit model</p></li>
 <li><p><strong>Phi_nb:</strong>  Length scale for spatial kernel in NB model, i.e.  \(e^{-\Phi_{nb}d^{2}}\)</p></li>
 <li><p><strong>Sigma2s:</strong>  Square root of multiplier for spatial kernel in NB model</p></li>
-<li><p><strong>Sigma_eps1s:</strong>  Estimated Standard deviation for eps1s</p></li>
-<li><p><strong>Sigma_eps2s:</strong>  Estimated Standard deviation for eps2s</p></li>
-<li><p><strong>Sigma_eps1t:</strong>  Estimated Standard deviation for eps1t</p></li>
-<li><p><strong>Sigma_eps2t:</strong>  Estimated Standard deviation for eps2t</p></li>
 <li><p><strong>R:</strong>  Dispersion parameter for Negative Binomial distribution.</p></li>
 <li><p><strong>at_risk:</strong>  At risk indicator for each observation</p></li>
 <li><p><strong>Y_pred:</strong>  Predictions, sampled from the posterior distribution at each iteration, NULL if save_ypred is false</p></li>
@@ -164,7 +156,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

@@ -1,20 +1,20 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/404.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/LICENSE-text.html</loc></url>
-<url><loc>https://kingjms1.github.io/NNGP_ZINB_R/articles/HuangExplanation.html</loc></url>
-<url><loc>https://kingjms1.github.io/NNGP_ZINB_R/articles/index.html</loc></url>
-<url><loc>https://kingjms1.github.io/NNGP_ZINB_R/articles/simulated_data.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/authors.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/index.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/gp_param_bounds.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/index.html</loc></url>
+<url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/kernel.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/mvn_sample_svd.html</loc></url>
-<url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/normalize.html</loc></url>
+<url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/noise_mix.html</loc></url>
+<url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/nullcheck.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/predict.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/sigmoid.html</loc></url>
 <url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/solve_svd.html</loc></url>
+<url><loc>https://kingjms1.github.io/NNGP_ZINB_R/reference/update_ls_sigma_noise.html</loc></url>
 </urlset>
 
