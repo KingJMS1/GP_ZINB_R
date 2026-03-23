@@ -1,11 +1,12 @@
-# ZINB (NN, in future)GP Bayesian Model
+# ZINB GP Bayesian Model
 
-This package implements the model first described in “A Framework of
-Zero-Inflated Bayesian Negative Binomial Regression Models For
-Spatiotemporal Data” by Qing He and Hsin-Hsiung Huang (2023).
-<https://doi.org/10.1016/j.jspi.2023.106098>, later amended by
-“Imaging-derived spatiotemporal modeling of landslide counts with noisy
-Gaussian process random effects.”
+This package implements a full Gaussian Process version of the model
+described in “A Framework of Zero-Inflated Bayesian Negative Binomial
+Regression Models For Spatiotemporal Data” by Qing He and Hsin-Hsiung
+Huang (2023). <https://doi.org/10.1016/j.jspi.2023.106098>, the full
+details of this model will appear in “Imaging-derived spatiotemporal
+modeling of landslide counts with noisy Gaussian process random
+effects.”
 
 This package is a work in progress, feel free to create an issue if you
 have suggestions or notice any problems.

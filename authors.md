@@ -11,14 +11,14 @@
 
 ## Citation
 
-He Q, Scott M, Huang H (2025). *ZINB.GP: Zero Inflated Negative Binomial
+He Q, Scott M, Huang H (2026). *ZINB.GP: Zero Inflated Negative Binomial
 model Using Gaussian Processes*. R package version 0.0.1.0,
 <https://kingjms1.github.io/NNGP_ZINB_R/>.
 
     @Manual{,
       title = {ZINB.GP: Zero Inflated Negative Binomial model Using Gaussian Processes},
       author = {Qing He and Mahlon Scott and Hsin-Hsiung Huang},
-      year = {2025},
+      year = {2026},
       note = {R package version 0.0.1.0},
       url = {https://kingjms1.github.io/NNGP_ZINB_R/},
     }
