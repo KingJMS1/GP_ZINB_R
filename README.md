@@ -34,7 +34,7 @@ Dt         Temporal distance matirx, diagonal should be 0,
            off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel
 nsim       How long to run MCMC in total, must be greater than burn.
 burn       How long to run MCMC before saving samples.
-thin       Thinning ratio for chain
+thin       Thinning ratio for chain, increase if running out of memory.
 ltPrior    Prior for temporal length scale, formatted as: list(max=50, mh_sd=3, a=1, b=0.001). a/b for gamma prior, max sets how high it is allowed to go, mh_sd controls the proposal variance for mh.
 lsPrior    Prior for spatial length scale, formatted the same as ltPrior.
 sigmaPrior Prior for sigmas in model, formatted as: list(a=0.01, b=0.1), inverse gamma prior
@@ -46,9 +46,11 @@ kern       Covariance kernel, takes a squared distance matrix, returns kernel co
 Given all of the above, predictions can then be found via:
 ```r
 library(ZINB.GP)
-output <- ZINB_GP(X, y, coords, Vs, Vt, Ds, Dt, M = M, nsim, burn, save_ypred = TRUE)
+output <- ZINB_GP(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, save_ypred = TRUE)
 predictions <- output$Y_pred
 ```
 
+The spatial and temporal design matrices, along with y can be created from a matrix-format y (rows are spatial locations, columns are temporal locations) via make_y_Vs_Vt. 
+
 ## API Reference
-API reference: https://kingjms1.github.io/NNGP_ZINB_R/reference/index.html
+API reference: https://kingjms1.github.io/GP_ZINB_R/reference/index.html

@@ -45,7 +45,7 @@ ZINB_GP(
 
 \item{burn}{How long to run MCMC before saving samples.}
 
-\item{thin}{How often to save MCMC samples, default is 1, saves every iteration.}
+\item{thin}{How often to save MCMC samples, default is 1, saves every iteration. Increase this if running out of memory.}
 
 \item{save_ypred}{Whether or not to output the predicted values at every iteration}
 
@@ -53,7 +53,17 @@ ZINB_GP(
 
 \item{print_progress}{Whether or not to print the iteration number of the MCMC chain.}
 
-\item{M}{How many neighbors to allow in the spatial NNGP algorithm, defaults to 10.}
+\item{ltPrior}{Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.}
+
+\item{lsPrior}{Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.}
+
+\item{sigmaPrior}{Parameters for inverse-gamma prior for sigma e.g. list(a=0.01, b=0.1)}
+
+\item{noisePrior}{Parameters for beta prior for kernel signal to noise ratio, along with MH proposal controls, e.g. list(a=1.5, b=1.5, mh_sd=0.2)}
+
+\item{mh_sd_r}{MH standard deviation for proposal distribution for r, change if r seems to be walking too slowly. Default is 0.4.}
+
+\item{kern}{Kernel function, takes a distance matrix and length scale, returns evaluated kernel. e.g. function(dist, ls) {return(exp(-dist / (ls^2)))}}
 }
 \value{
 A List of the following sampled values:

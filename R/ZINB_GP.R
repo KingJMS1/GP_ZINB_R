@@ -136,13 +136,18 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 #' @param Vt   Temporal varying predictor variables, wrapped in sparseMatrix from Matrix R package. Will be multiplied by the temporal random effects for prediction.
 #' @param Ds   Spatial distance matrix, diagonal should be 0, off diagonal is distance between elements i and j in space, inputs to the spatial NNGP kernel
 #' @param Dt   Temporal distance matirx, diagonal should be 0, off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel
-#' @param M    How many neighbors to allow in the spatial NNGP algorithm, defaults to 10.
 #' @param nsim How long to run MCMC in total, must be greater than burn.
 #' @param burn How long to run MCMC before saving samples.
-#' @param thin How often to save MCMC samples, default is 1, saves every iteration.
+#' @param thin How often to save MCMC samples, default is 1, saves every iteration. Increase this if running out of memory.
 #' @param save_ypred Whether or not to output the predicted values at every iteration
 #' @param print_iter How often to print the iteration number of the MCMC chain.
 #' @param print_progress Whether or not to print the iteration number of the MCMC chain.
+#' @param ltPrior Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.
+#' @param lsPrior Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.
+#' @param sigmaPrior Parameters for inverse-gamma prior for sigma e.g. list(a=0.01, b=0.1)
+#' @param noisePrior Parameters for beta prior for kernel signal to noise ratio, along with MH proposal controls, e.g. list(a=1.5, b=1.5, mh_sd=0.2)
+#' @param mh_sd_r MH standard deviation for proposal distribution for r, change if r seems to be walking too slowly. Default is 0.4.
+#' @param kern Kernel function, takes a distance matrix and length scale, returns evaluated kernel. e.g. function(dist, ls) {return(exp(-dist / (ls^2)))}
 #' @return A List of the following sampled values:          
 #' \itemize{
 #'      \item {\strong{Alpha:} } {Model coefficients for logit model}
