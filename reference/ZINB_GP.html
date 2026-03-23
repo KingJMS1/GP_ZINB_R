@@ -107,7 +107,7 @@
 
 
 <dt id="arg-thin">thin<a class="anchor" aria-label="anchor" href="#arg-thin"></a></dt>
-<dd><p>How often to save MCMC samples, default is 1, saves every iteration.</p></dd>
+<dd><p>How often to save MCMC samples, default is 1, saves every iteration. Increase this if running out of memory.</p></dd>
 
 
 <dt id="arg-save-ypred">save_ypred<a class="anchor" aria-label="anchor" href="#arg-save-ypred"></a></dt>
@@ -122,8 +122,28 @@
 <dd><p>Whether or not to print the iteration number of the MCMC chain.</p></dd>
 
 
-<dt id="arg-m">M<a class="anchor" aria-label="anchor" href="#arg-m"></a></dt>
-<dd><p>How many neighbors to allow in the spatial NNGP algorithm, defaults to 10.</p></dd>
+<dt id="arg-ltprior">ltPrior<a class="anchor" aria-label="anchor" href="#arg-ltprior"></a></dt>
+<dd><p>Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.</p></dd>
+
+
+<dt id="arg-lsprior">lsPrior<a class="anchor" aria-label="anchor" href="#arg-lsprior"></a></dt>
+<dd><p>Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.</p></dd>
+
+
+<dt id="arg-sigmaprior">sigmaPrior<a class="anchor" aria-label="anchor" href="#arg-sigmaprior"></a></dt>
+<dd><p>Parameters for inverse-gamma prior for sigma e.g. list(a=0.01, b=0.1)</p></dd>
+
+
+<dt id="arg-noiseprior">noisePrior<a class="anchor" aria-label="anchor" href="#arg-noiseprior"></a></dt>
+<dd><p>Parameters for beta prior for kernel signal to noise ratio, along with MH proposal controls, e.g. list(a=1.5, b=1.5, mh_sd=0.2)</p></dd>
+
+
+<dt id="arg-mh-sd-r">mh_sd_r<a class="anchor" aria-label="anchor" href="#arg-mh-sd-r"></a></dt>
+<dd><p>MH standard deviation for proposal distribution for r, change if r seems to be walking too slowly. Default is 0.4.</p></dd>
+
+
+<dt id="arg-kern">kern<a class="anchor" aria-label="anchor" href="#arg-kern"></a></dt>
+<dd><p>Kernel function, takes a distance matrix and length scale, returns evaluated kernel. e.g. function(dist, ls) return(exp(-dist / (ls^2)))</p></dd>
 
 </dl></div>
     <div class="section level2">
