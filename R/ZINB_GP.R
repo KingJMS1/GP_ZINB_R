@@ -498,7 +498,7 @@ ZINB_GP_spatial <- function(
         stop("Vs must have the same number of rows as X.")
     }
 
-    if (nrow(Ds) != ncol(Vs) || ncol(Ds) != ncol(Vs)) {
+    if (ncol(Vs) != nrow(Ds)) {
         stop("Ds must be a square matrix with ncol(Vs) rows and columns.")
     }
 
@@ -519,6 +519,7 @@ ZINB_GP_spatial <- function(
     n_space <- ncol(Vs)
     n_saved <- (nsim - burn) / thin
 
+    Ds <- Ds[-1, -1, drop = FALSE]
     # The original model uses squared distances in the kernel.
     Ds <- Ds^2
 
