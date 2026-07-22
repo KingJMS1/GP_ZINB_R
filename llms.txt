@@ -76,6 +76,8 @@ API reference:
   : ZINB_GP
 - [`ZINB_GP_spatial()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_spatial.md)
   : ZINB_GP_spatial
+- [`ZINB_GP_spatial2()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_spatial2.md)
+  : ZINB_GP_spatial2
 - [`estimate()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate.md)
   : estimate
 - [`gp_param_bounds()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/gp_param_bounds.md)
