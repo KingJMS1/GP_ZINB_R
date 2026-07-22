@@ -1161,10 +1161,6 @@ ZINB_GP_spatial2 <- function(
 
             C[j, ] <- c
 
-            L1s[j] <- l1s
-            Sigma1s[j] <- sigma1s
-            Noise1s[j] <- noise_ratio_s1
-
             L2s[j] <- l2s
             Sigma2s[j] <- sigma2s
             Noise2s[j] <- noise_ratio_s2
@@ -1172,7 +1168,7 @@ ZINB_GP_spatial2 <- function(
             R[j] <- r
 
             if (save_ypred) {
-                eta1 <- as.numeric(X %*% alpha + Vs %*% a)
+                eta1 <- as.numeric(X %*% alpha)
                 eta2 <- as.numeric(X %*% beta + Vs %*% c)
 
                 pi <- sigmoid(eta1)
@@ -1196,9 +1192,6 @@ ZINB_GP_spatial2 <- function(
         Alpha = Alpha,
         Beta = Beta,
         C = C,
-        L1s = L1s,
-        Sigma1s = Sigma1s,
-        Noise1s = Noise1s,
         L2s = L2s,
         Sigma2s = Sigma2s,
         Noise2s = Noise2s,
