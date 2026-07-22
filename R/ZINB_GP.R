@@ -86,7 +86,7 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
     }
     
     # Update noise ratio
-    eps_nr <- 0.005
+    eps_nr <- 2.06115369216775e-09
     proposal <- rtnorm(1, mean = noise_ratio, sd = noisePrior$mh_sd, lower = eps_nr, upper = 1 - eps_nr) #max(min(rnorm(1, noise_ratio, noisePrior$mh_sd), 1 - 1e-7), 0 + 1e-7)
     if (TRUE) {
         K_star <- sigma^2 * noise_mix(kern(D, ls), proposal)
@@ -97,7 +97,7 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
         
         # Calculate prior likelihood
         prior_nr <- dbeta(x = proposal, shape1 = noisePrior$a, shape2 = noisePrior$b, log = TRUE) -
-            dbeta(x = ls, shape1 = noisePrior$a, shape2 = noisePrior$b, log = TRUE)
+            dbeta(x = noise_ratio, shape1 = noisePrior$a, shape2 = noisePrior$b, log = TRUE)
 
         # Calculate transition probabilities
         trans_ls <- dtnorm(x = noise_ratio, mean = proposal, sd = noisePrior$mh_sd, lower = eps_nr, upper = 1 - eps_nr, log = 1) - 
@@ -113,7 +113,7 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
     }
 
     # update sigma1t, kernel matrices
-    K_nosigma <- noise_mix(kern(D, ls^2), noise_ratio)
+    K_nosigma <- noise_mix(kern(D, ls), noise_ratio)
     K_nosigma_inv <- forceSymmetric(solve(K_nosigma))
     a_new <- sigmaPrior$a + 0.5 * length(gpdraw)
     b_new <- sigmaPrior$b + 0.5 * (t(gpdraw) %*% K_nosigma_inv %*% gpdraw)
@@ -445,4 +445,407 @@ ZINB_GP <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, save_ypr
         results <- append(results, temp)
     }
     return(results)
+}
+
+#' ZINB_GP_spatial
+#'
+#' Fit a zero-inflated negative-binomial model with spatial Gaussian-process
+#' random effects in both the zero-inflation and count components.
+#'
+#' @param X Fixed-effect design matrix with N rows.
+#' @param y Non-negative integer count response of length N.
+#' @param Vs Sparse or dense spatial random-effect design matrix. It should
+#'   have N rows and one column per spatial location.
+#' @param Ds Spatial distance matrix, with one row and column per spatial
+#'   random effect. Diagonal entries must be zero.
+#' @param nsim Total number of MCMC iterations.
+#' @param burn Number of burn-in iterations.
+#' @param thin Store every thin-th iteration after burn-in.
+#' @param save_ypred Whether to save posterior fitted means and at-risk draws.
+#' @param print_iter Print progress every print_iter iterations.
+#' @param print_progress Whether to print MCMC progress.
+#' @param lsPrior Prior and proposal controls for spatial GP length scales.
+#' @param sigmaPrior Inverse-gamma prior parameters for GP variances.
+#' @param noisePrior Beta prior and MH controls for GP noise ratios.
+#' @param mh_sd_r Proposal standard deviation for NB dispersion r.
+#' @param kern Kernel function accepting a squared-distance matrix and a
+#'   length scale.
+#'
+#' @return A list containing posterior MCMC draws.
+#' @export
+ZINB_GP_spatial <- function(
+    X,
+    y,
+    Vs,
+    Ds,
+    nsim,
+    burn,
+    thin = 1,
+    save_ypred = FALSE,
+    print_iter = 100,
+    print_progress = FALSE,
+    lsPrior = NULL,
+    sigmaPrior = NULL,
+    noisePrior = NULL,
+    mh_sd_r = NULL,
+    kern = NULL
+) {
+    if (length(y) != nrow(X)) {
+        stop("y must have the same number of entries as rows in X.")
+    }
+
+    if (nrow(Vs) != nrow(X)) {
+        stop("Vs must have the same number of rows as X.")
+    }
+
+    if (nrow(Ds) != ncol(Vs) || ncol(Ds) != ncol(Vs)) {
+        stop("Ds must be a square matrix with ncol(Vs) rows and columns.")
+    }
+
+    if (nsim <= burn) {
+        stop("nsim must be greater than burn.")
+    }
+
+    if ((nsim - burn) %% thin != 0) {
+        stop("(nsim - burn) must be divisible by thin.")
+    }
+
+    if (!any(y > 0)) {
+        stop("At least one positive count is required to initialize glm.nb.")
+    }
+
+    N <- nrow(X)
+    p <- ncol(X)
+    n_space <- ncol(Vs)
+    n_saved <- (nsim - burn) / thin
+
+    # The original model uses squared distances in the kernel.
+    Ds <- Ds^2
+
+    kern <- nullcheck(kern, kernel)
+
+    max_distance <- sqrt(max(Ds))
+    if (!is.finite(max_distance) || max_distance <= 0) {
+        max_distance <- 1
+    }
+
+    lsPrior <- nullcheck(
+        lsPrior,
+        list(max = max_distance, mh_sd = 3, a = 1, b = 0.001)
+    )
+
+    sigmaPrior <- nullcheck(
+        sigmaPrior,
+        list(a = 0.01, b = 0.1)
+    )
+
+    noisePrior <- nullcheck(
+        noisePrior,
+        list(a = 1.5, b = 1.5, mh_sd = 0.2)
+    )
+
+    sd_r <- nullcheck(mh_sd_r, 0.4)
+
+    # Fixed-effect prior precisions.
+    T0a <- diag(100, p)
+    T0b <- diag(100, p)
+
+    # Initial latent at-risk indicator.
+    y_ind <- as.integer(y != 0)
+
+    m1 <- stats::glm(y_ind ~ 0 + X, family = "binomial")
+    alpha <- as.numeric(m1$coefficients)
+
+    m2 <- MASS::glm.nb(y[y != 0] ~ 0 + X[y != 0, , drop = FALSE])
+    beta <- as.numeric(m2$coefficients)
+
+    eta1 <- as.numeric(X %*% alpha)
+    eta2 <- as.numeric(X %*% beta)
+
+    p_at_risk <- sigmoid(eta1)
+    q <- 1 / (1 + exp(eta2))
+
+    r <- 1
+
+    y1 <- rep(0, N)
+    y1[y > 0] <- 1
+
+    theta <- p_at_risk * q^r / (p_at_risk * q^r + 1 - p_at_risk)
+
+    y1[y == 0] <- stats::rbinom(
+        sum(y == 0),
+        size = 1,
+        prob = theta[y == 0]
+    )
+
+    # Spatial GP initialization: zero-inflation component.
+    l1s <- 1
+    sigma1s <- 2
+    noise_ratio_s1 <- 0.5
+
+    Ks_bin <- sigma1s^2 * noise_mix(
+        kern(Ds, l1s),
+        noise_ratio_s1
+    )
+
+    Ks_bin_inv <- Matrix::forceSymmetric(solve(Ks_bin))
+    a <- as.numeric(mvtnorm::rmvnorm(n = 1, sigma = Ks_bin))
+
+    # Spatial GP initialization: count component.
+    l2s <- 1
+    sigma2s <- 2
+    noise_ratio_s2 <- 0.5
+
+    Ks_nb <- sigma2s^2 * noise_mix(
+        kern(Ds, l2s),
+        noise_ratio_s2
+    )
+
+    Ks_nb_inv <- Matrix::forceSymmetric(solve(Ks_nb))
+    c <- as.numeric(mvtnorm::rmvnorm(n = 1, sigma = Ks_nb))
+
+    # Posterior storage.
+    Alpha <- matrix(0, n_saved, p)
+    Beta <- matrix(0, n_saved, p)
+
+    A <- matrix(0, n_saved, n_space)
+    C <- matrix(0, n_saved, n_space)
+
+    L1s <- rep(0, n_saved)
+    Sigma1s <- rep(0, n_saved)
+    Noise1s <- rep(0, n_saved)
+
+    L2s <- rep(0, n_saved)
+    Sigma2s <- rep(0, n_saved)
+    Noise2s <- rep(0, n_saved)
+
+    R <- rep(0, n_saved)
+
+    if (save_ypred) {
+        Y_pred <- matrix(NA_real_, n_saved, N)
+        at_risk <- matrix(NA_integer_, n_saved, N)
+    }
+
+    # Fixed and spatial-effect design matrix.
+    XV <- cbind(X, Vs)
+
+    for (i in seq_len(nsim)) {
+        # ---------------------------------------------------------------
+        # Zero-inflation component: update alpha and spatial effect a.
+        # ---------------------------------------------------------------
+        T0_bin <- as.matrix(Matrix::bdiag(T0a, Ks_bin_inv))
+
+        eta1 <- as.numeric(X %*% alpha + Vs %*% a)
+        w_bin <- BayesLogit::rpg(N, 1, eta1)
+        z_bin <- (y1 - 0.5) / w_bin
+
+        svd_vinv <- svd(crossprod(sqrt(w_bin) * XV) + T0_bin)
+        m <- solve_svd(
+            svd_vinv,
+            t(sqrt(w_bin) * XV) %*% (sqrt(w_bin) * z_bin)
+        )
+
+        draw_bin <- c(mvn_sample_svd(svd_vinv, m))
+        alpha <- draw_bin[seq_len(p)]
+        a <- draw_bin[p + seq_len(n_space)]
+
+        # ---------------------------------------------------------------
+        # Update the latent at-risk indicator.
+        # ---------------------------------------------------------------
+        eta1 <- as.numeric(X %*% alpha + Vs %*% a)
+        eta2 <- as.numeric(X %*% beta + Vs %*% c)
+
+        pi <- sigmoid(eta1)
+        q <- 1 / (1 + exp(eta2))
+
+        theta <- pi * q^r / (pi * q^r + 1 - pi)
+
+        y1[y == 0] <- stats::rbinom(
+            sum(y == 0),
+            size = 1,
+            prob = theta[y == 0]
+        )
+
+        N1 <- sum(y1)
+
+        # ---------------------------------------------------------------
+        # Update negative-binomial dispersion parameter r.
+        # ---------------------------------------------------------------
+        rnew <- msm::rtnorm(
+            n = 1,
+            mean = r,
+            sd = sd_r,
+            lower = 0
+        )
+
+        log_accept_r <-
+            sum(stats::dnbinom(
+                y[y1 == 1],
+                size = rnew,
+                prob = q[y1 == 1],
+                log = TRUE
+            )) -
+            sum(stats::dnbinom(
+                y[y1 == 1],
+                size = r,
+                prob = q[y1 == 1],
+                log = TRUE
+            )) +
+            msm::dtnorm(
+                x = r,
+                mean = rnew,
+                sd = sd_r,
+                lower = 0,
+                log = TRUE
+            ) -
+            msm::dtnorm(
+                x = rnew,
+                mean = r,
+                sd = sd_r,
+                lower = 0,
+                log = TRUE
+            )
+
+        if (!is.na(log_accept_r) && log(stats::runif(1)) < log_accept_r) {
+            r <- rnew
+        }
+
+        # ---------------------------------------------------------------
+        # Update spatial GP for zero-inflation component.
+        # ---------------------------------------------------------------
+        out <- update_ls_sigma_noise_spatial(
+            ls = l1s,
+            sigma = sigma1s,
+            noise_ratio = noise_ratio_s1,
+            gpdraw = a,
+            K = Ks_bin,
+            D = Ds,
+            lsPrior = lsPrior,
+            sigmaPrior = sigmaPrior,
+            noisePrior = noisePrior,
+            kern = kern
+        )
+
+        l1s <- out$ls
+        sigma1s <- out$sigma
+        noise_ratio_s1 <- out$noise_ratio
+        Ks_bin <- out$K
+        Ks_bin_inv <- out$K_inv
+
+        # ---------------------------------------------------------------
+        # Count component: update beta and spatial effect c.
+        # ---------------------------------------------------------------
+        T0_nb <- as.matrix(Matrix::bdiag(T0b, Ks_nb_inv))
+
+        eta_nb <- as.numeric(
+            X[y1 == 1, , drop = FALSE] %*% beta +
+                Vs[y1 == 1, , drop = FALSE] %*% c
+        )
+
+        w_nb <- BayesLogit::rpg(
+            N1,
+            y[y1 == 1] + r,
+            eta_nb
+        )
+
+        z_nb <- (y[y1 == 1] - r) / (2 * w_nb)
+
+        XV_nb <- XV[y1 == 1, , drop = FALSE]
+
+        svd_vinv <- svd(crossprod(sqrt(w_nb) * XV_nb) + T0_nb)
+        m <- solve_svd(
+            svd_vinv,
+            t(sqrt(w_nb) * XV_nb) %*% (sqrt(w_nb) * z_nb)
+        )
+
+        draw_nb <- c(mvn_sample_svd(svd_vinv, m))
+
+        beta <- draw_nb[seq_len(p)]
+        c <- draw_nb[p + seq_len(n_space)]
+
+        # ---------------------------------------------------------------
+        # Update spatial GP for count component.
+        # ---------------------------------------------------------------
+        out <- update_ls_sigma_noise_spatial(
+            ls = l2s,
+            sigma = sigma2s,
+            noise_ratio = noise_ratio_s2,
+            gpdraw = c,
+            K = Ks_nb,
+            D = Ds,
+            lsPrior = lsPrior,
+            sigmaPrior = sigmaPrior,
+            noisePrior = noisePrior,
+            kern = kern
+        )
+
+        l2s <- out$ls
+        sigma2s <- out$sigma
+        noise_ratio_s2 <- out$noise_ratio
+        Ks_nb <- out$K
+        Ks_nb_inv <- out$K_inv
+
+        # ---------------------------------------------------------------
+        # Store posterior draw.
+        # ---------------------------------------------------------------
+        if (i > burn && i %% thin == 0) {
+            j <- (i - burn) / thin
+
+            Alpha[j, ] <- alpha
+            Beta[j, ] <- beta
+
+            A[j, ] <- a
+            C[j, ] <- c
+
+            L1s[j] <- l1s
+            Sigma1s[j] <- sigma1s
+            Noise1s[j] <- noise_ratio_s1
+
+            L2s[j] <- l2s
+            Sigma2s[j] <- sigma2s
+            Noise2s[j] <- noise_ratio_s2
+
+            R[j] <- r
+
+            if (save_ypred) {
+                eta1 <- as.numeric(X %*% alpha + Vs %*% a)
+                eta2 <- as.numeric(X %*% beta + Vs %*% c)
+
+                pi <- sigmoid(eta1)
+
+                # NB mean conditional on being at risk:
+                # r * (1 - q) / q = r * exp(eta2).
+                mu_nb <- r * exp(eta2)
+
+                # Marginal ZINB expected count.
+                Y_pred[j, ] <- pi * mu_nb
+                at_risk[j, ] <- y1
+            }
+        }
+
+        if (print_progress && i %% print_iter == 0) {
+            print(i)
+        }
+    }
+
+    results <- list(
+        Alpha = Alpha,
+        Beta = Beta,
+        A = A,
+        C = C,
+        L1s = L1s,
+        Sigma1s = Sigma1s,
+        Noise1s = Noise1s,
+        L2s = L2s,
+        Sigma2s = Sigma2s,
+        Noise2s = Noise2s,
+        R = R
+    )
+
+    if (save_ypred) {
+        results$Y_pred <- Y_pred
+        results$at_risk <- at_risk
+    }
+
+    results
 }
