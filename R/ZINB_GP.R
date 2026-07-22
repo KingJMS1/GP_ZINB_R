@@ -714,7 +714,7 @@ ZINB_GP_spatial <- function(
         # ---------------------------------------------------------------
         # Update spatial GP for zero-inflation component.
         # ---------------------------------------------------------------
-        out <- update_ls_sigma_noise_spatial(
+        out <- update_ls_sigma_noise(
             ls = l1s,
             sigma = sigma1s,
             noise_ratio = noise_ratio_s1,
@@ -767,7 +767,7 @@ ZINB_GP_spatial <- function(
         # ---------------------------------------------------------------
         # Update spatial GP for count component.
         # ---------------------------------------------------------------
-        out <- update_ls_sigma_noise_spatial(
+        out <- update_ls_sigma_noise(
             ls = l2s,
             sigma = sigma2s,
             noise_ratio = noise_ratio_s2,
