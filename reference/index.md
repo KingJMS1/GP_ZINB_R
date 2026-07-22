@@ -4,6 +4,8 @@
 
 - [`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md)
   : ZINB_GP
+- [`ZINB_GP_spatial()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_spatial.md)
+  : ZINB_GP_spatial
 - [`estimate()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate.md)
   : estimate
 - [`gp_param_bounds()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/gp_param_bounds.md)
