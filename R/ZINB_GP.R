@@ -498,8 +498,8 @@ ZINB_GP_spatial <- function(
         stop("Vs must have the same number of rows as X.")
     }
 
-    if (ncol(Vs) != nrow(Ds)) {
-        stop("Ds must be a square matrix with ncol(Vs) rows and columns.")
+    if (ncol(Vs) + 1 != nrow(Ds)) {
+        stop("Ds must be a square matrix with ncol(Vs) + 1 rows and columns.")
     }
 
     if (nsim <= burn) {
