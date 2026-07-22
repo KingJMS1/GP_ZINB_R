@@ -16,6 +16,7 @@ have suggestions or notice any problems.
 Install the devtools R package, then run the following command
 
 ``` r
+
 install.packages(c("BayesLogit", "LaplacesDemon", "MASS", "Matrix", "msm", "mvtnorm"))
 devtools::install_github("KingJMS1/NNGP_ZINB_R")
 ```
@@ -52,6 +53,7 @@ source and data for which can be found at the experiments repository:
 Given all of the above, predictions can then be found via:
 
 ``` r
+
 library(ZINB.GP)
 output <- ZINB_GP(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, save_ypred = TRUE)
 predictions <- output$Y_pred
