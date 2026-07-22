@@ -1027,10 +1027,10 @@ ZINB_GP_spatial2 <- function(
         w_bin <- BayesLogit::rpg(N, 1, eta1)
         z_bin <- (y1 - 0.5) / w_bin
 
-        svd_vinv <- svd(crossprod(sqrt(w_bin) * XV) + T0_bin)
+        svd_vinv <- svd(crossprod(sqrt(w_bin) * X) + T0_bin)
         m <- solve_svd(
             svd_vinv,
-            t(sqrt(w_bin) * XV) %*% (sqrt(w_bin) * z_bin)
+            t(sqrt(w_bin) * X) %*% (sqrt(w_bin) * z_bin)
         )
 
         draw_bin <- c(mvn_sample_svd(svd_vinv, m))
