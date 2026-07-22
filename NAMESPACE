@@ -2,6 +2,7 @@
 
 export(ZINB_GP)
 export(ZINB_GP_spatial)
+export(ZINB_GP_spatial2)
 export(kernel)
 export(make_y_Vs_Vt)
 export(noise_mix)
