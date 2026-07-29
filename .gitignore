@@ -1,2 +1,5 @@
 not_package/simdata
 docs
+tmp/
+*.Rcheck/
+*.tar.gz

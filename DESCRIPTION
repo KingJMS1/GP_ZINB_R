@@ -22,3 +22,9 @@ Imports:
     msm,
     mvtnorm,
     stats
+Suggests:
+    coda,
+    knitr,
+    posterior,
+    rmarkdown
+VignetteBuilder: knitr
