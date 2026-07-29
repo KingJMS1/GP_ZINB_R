@@ -13,7 +13,14 @@
 #'   predictor pair.
 #' @keywords internal
 draw_zinb_response <- function(eta_at_risk, eta_count, r) {
+    eta_at_risk <- c(eta_at_risk)
+    eta_count <- c(eta_count)
     N <- length(eta_at_risk)
+
+    if (length(eta_count) != N) {
+        stop("`eta_at_risk` and `eta_count` must have the same length.")
+    }
+
     at_risk <- stats::rbinom(N, 1, sigmoid(eta_at_risk))
     y <- integer(N)
 
@@ -26,103 +33,6 @@ draw_zinb_response <- function(eta_at_risk, eta_count, r) {
     }
 
     y
-}
-
-#' @title Draw from the full posterior predictive distribution
-#' @description Draw a zero-inflated negative-binomial response conditional on
-#' sampled fixed effects and spatial and temporal random effects.
-#' @param X Fixed-effect design matrix.
-#' @param alpha Fixed-effect coefficients for the zero-inflation component.
-#' @param beta Fixed-effect coefficients for the count component.
-#' @param Vs Spatial random-effect design matrix.
-#' @param Vt Temporal random-effect design matrix.
-#' @param a Spatial random-effect draw for the zero-inflation component.
-#' @param b Temporal random-effect draw for the zero-inflation component.
-#' @param c Spatial random-effect draw for the count component.
-#' @param d Temporal random-effect draw for the count component.
-#' @param r Negative-binomial dispersion parameter.
-#' @return A vector of posterior predictive count draws.
-#' @importFrom stats rbinom rnbinom
-estimate <- function(X, alpha, beta, Vs, Vt, a, b, c, d, r) {
-    N <- nrow(X)
-    
-    # Calculate etas
-    eta1 <- X %*% alpha + Vs %*% a + Vt %*% b
-    p_at_risk <- sigmoid(eta1) # at-risk probability
-    u <- rbinom(N, 1, p_at_risk) # at-risk indicator
-    if (ncol(X) == 1) {
-        eta2 <- X[u == 1, ] * beta + Vs[u == 1, ] %*% c + Vt[u == 1, ] %*% d # Linear predictor for count part
-    } else {
-        eta2 <- X[u == 1, ] %*% beta + Vs[u == 1, ] %*% c + Vt[u == 1, ] %*% d # Linear predictor for count part
-    }
-    psi <- sigmoid(eta2) # Prob of success
-    mu <- r * psi / (1 - psi) # NB mean
-    y <- rep(0, N) # Response
-    y[u == 1] <- rnbinom(n=length(psi), size=r, prob=(1 - psi)) # Draw from posterior
-    return(y)
-}
-
-#' @title Draw posterior predictions without inflation random effects
-#' @description Draw a zero-inflated negative-binomial response conditional on
-#' fixed effects and count-component spatial and temporal random effects.
-#' @param X Fixed-effect design matrix.
-#' @param alpha Fixed-effect coefficients for the zero-inflation component.
-#' @param beta Fixed-effect coefficients for the count component.
-#' @param Vs Spatial random-effect design matrix.
-#' @param Vt Temporal random-effect design matrix.
-#' @param c Spatial random-effect draw for the count component.
-#' @param d Temporal random-effect draw for the count component.
-#' @param r Negative-binomial dispersion parameter.
-#' @return A vector of posterior predictive count draws.
-estimate_noab <- function(X, alpha, beta, Vs, Vt, c, d, r) {
-    N <- nrow(X)
-    
-    # Calculate etas
-    eta1 <- X %*% alpha
-    p_at_risk <- sigmoid(eta1) # at-risk probability
-    u <- rbinom(N, 1, p_at_risk) # at-risk indicator
-    if (ncol(X) == 1) {
-        eta2 <- X[u == 1, ] * beta + Vs[u == 1, ] %*% c + Vt[u == 1, ] %*% d # Linear predictor for count part
-    } else {
-        eta2 <- X[u == 1, ] %*% beta + Vs[u == 1, ] %*% c + Vt[u == 1, ] %*% d # Linear predictor for count part
-    }
-    psi <- sigmoid(eta2) # Prob of success
-    mu <- r * psi / (1 - psi) # NB mean
-    y <- rep(0, N) # Response
-    y[u == 1] <- rnbinom(n=length(psi), size=r, prob=(1 - psi)) # Draw from posterior
-    return(y)
-}
-
-
-#' @title Draw posterior predictions without count random effects
-#' @description Draw a zero-inflated negative-binomial response conditional on
-#' fixed effects and zero-inflation-component spatial and temporal random effects.
-#' @param X Fixed-effect design matrix.
-#' @param alpha Fixed-effect coefficients for the zero-inflation component.
-#' @param beta Fixed-effect coefficients for the count component.
-#' @param Vs Spatial random-effect design matrix.
-#' @param Vt Temporal random-effect design matrix.
-#' @param a Spatial random-effect draw for the zero-inflation component.
-#' @param b Temporal random-effect draw for the zero-inflation component.
-#' @param r Negative-binomial dispersion parameter.
-#' @return A vector of posterior predictive count draws.
-estimate_nocd <- function(X, alpha, beta, Vs, Vt, a, b, r) {
-    N <- nrow(X)
-    
-    # Calculate etas
-    eta1 <- X %*% alpha + Vs %*% a + Vt %*% b
-    p_at_risk <- sigmoid(eta1) # at-risk probability
-    u <- rbinom(N, 1, p_at_risk) # at-risk indicator
-    if (ncol(X) == 1) {
-        eta2 <- X[u == 1, ] * beta # Linear predictor for count part
-    } else {
-        eta2 <- X[u == 1, ] %*% beta # Linear predictor for count part
-    }
-    psi <- sigmoid(eta2) # Prob of success
-    mu <- r * psi / (1 - psi) # NB mean
-    y <- rep(0, N) # Response
-    y[u == 1] <- rnbinom(n=length(psi), size=r, prob=(1 - psi)) # Draw from posterior
-    return(y)
 }
 
 

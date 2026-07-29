@@ -592,7 +592,13 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
             
             R[j] <- r
             if (save_ypred) {
-                Y_pred[j, ] <- estimate(X, alpha, beta, Vs, Vt, a, b, c, d, r)
+                eta_at_risk <- X %*% alpha + Vs %*% a + Vt %*% b
+                eta_count <- X %*% beta + Vs %*% c + Vt %*% d
+                Y_pred[j, ] <- draw_zinb_response(
+                    eta_at_risk = eta_at_risk,
+                    eta_count = eta_count,
+                    r = r
+                )
                 y1s[j, ] <- y1
             }
         }
@@ -846,7 +852,13 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
             
             R[j] <- r
             if (save_ypred) {
-                Y_pred[j, ] <- estimate_nocd(X, alpha, beta, Vs, Vt, a, b, r)
+                eta_at_risk <- X %*% alpha + Vs %*% a + Vt %*% b
+                eta_count <- X %*% beta
+                Y_pred[j, ] <- draw_zinb_response(
+                    eta_at_risk = eta_at_risk,
+                    eta_count = eta_count,
+                    r = r
+                )
                 y1s[j, ] <- y1
             }
         }
@@ -1097,7 +1109,13 @@ ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sa
             
             R[j] <- r
             if (save_ypred) {
-                Y_pred[j, ] <- estimate_noab(X, alpha, beta, Vs, Vt, c, d, r)
+                eta_at_risk <- X %*% alpha
+                eta_count <- X %*% beta + Vs %*% c + Vt %*% d
+                Y_pred[j, ] <- draw_zinb_response(
+                    eta_at_risk = eta_at_risk,
+                    eta_count = eta_count,
+                    r = r
+                )
                 y1s[j, ] <- y1
             }
         }
@@ -1500,7 +1518,11 @@ ZINB_GP_spatial <- function(
             if (save_ypred) {
                 eta1 <- as.numeric(X %*% alpha + Vs %*% a)
                 eta2 <- as.numeric(X %*% beta + Vs %*% c)
-                Y_pred[j, ] <- draw_zinb_response(eta1, eta2, r)
+                Y_pred[j, ] <- draw_zinb_response(
+                    eta_at_risk = eta1,
+                    eta_count = eta2,
+                    r = r
+                )
                 at_risk[j, ] <- y1
             }
         }
@@ -1869,7 +1891,11 @@ ZINB_GP_spatial_count <- function(
             if (save_ypred) {
                 eta1 <- as.numeric(X %*% alpha)
                 eta2 <- as.numeric(X %*% beta + Vs %*% c)
-                Y_pred[j, ] <- draw_zinb_response(eta1, eta2, r)
+                Y_pred[j, ] <- draw_zinb_response(
+                    eta_at_risk = eta1,
+                    eta_count = eta2,
+                    r = r
+                )
                 at_risk[j, ] <- y1
             }
         }
@@ -2231,7 +2257,11 @@ ZINB_GP_spatial_inflation <- function(
             if (save_ypred) {
                 eta1 <- as.numeric(X %*% alpha + Vs %*% a)
                 eta2 <- as.numeric(X %*% beta)
-                Y_pred[j, ] <- draw_zinb_response(eta1, eta2, r)
+                Y_pred[j, ] <- draw_zinb_response(
+                    eta_at_risk = eta1,
+                    eta_count = eta2,
+                    r = r
+                )
                 at_risk[j, ] <- y1
             }
         }
