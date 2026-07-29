@@ -1,4 +1,4 @@
-# ZINB_GP
+# ZINB_GP_orig
 
 Run the ZINB NNGP model described in
 https://doi.org/10.1016/j.jspi.2023.106098.
@@ -6,28 +6,26 @@ https://doi.org/10.1016/j.jspi.2023.106098.
 ## Usage
 
 ``` r
-ZINB_GP(
+ZINB_GP_orig(
   X,
   y,
   coords,
-  nsim = 5000,
-  burn = 1000,
-  use_count_gp = TRUE,
-  use_inflation_gp = FALSE,
+  Vs,
+  Vt,
+  Ds,
+  Dt,
+  nsim,
+  burn,
   thin = 1,
-  kern = NULL,
   save_ypred = FALSE,
   print_iter = 100,
   print_progress = FALSE,
-  Vs = NULL,
-  Vt = NULL,
-  Ds = NULL,
-  Dt = NULL,
   ltPrior = NULL,
   lsPrior = NULL,
   sigmaPrior = NULL,
   noisePrior = NULL,
-  mh_sd_r = NULL
+  mh_sd_r = NULL,
+  kern = NULL
 )
 ```
 
@@ -44,51 +42,6 @@ ZINB_GP(
 - coords:
 
   Spatial coordinates for NNGP
-
-- nsim:
-
-  How long to run MCMC in total, must be greater than burn, defaults to
-  5000 iterations
-
-- burn:
-
-  How long to run MCMC before saving samples, defaults to 1000
-  iterations
-
-- use_count_gp:
-
-  Whether or not to include GP random effects in the count model,
-  defaults to true, recommended
-
-- use_inflation_gp:
-
-  Whether or not to include GP random effects in the zero-inflation
-  portion of the model, defaults to false, not recommended
-
-- thin:
-
-  How often to save MCMC samples, default is 1, saves every iteration.
-  Increase this if running out of memory.
-
-- kern:
-
-  Kernel function, takes a distance matrix and length scale, returns
-  evaluated kernel. e.g. function(dist, ls) return(exp(-dist / (ls^2)))
-
-- save_ypred:
-
-  Whether or not to output the predicted values of the response,
-  defaults to false
-
-- print_iter:
-
-  If print_progress is set, how often to print the iteration number of
-  the MCMC chain, defaults to every 100 iterations.
-
-- print_progress:
-
-  Whether or not to print the iteration number of the MCMC chain,
-  defaults to True
 
 - Vs:
 
@@ -115,6 +68,31 @@ ZINB_GP(
   distance between elements i and j in time, inputs to the temporal GP
   kernel
 
+- nsim:
+
+  How long to run MCMC in total, must be greater than burn.
+
+- burn:
+
+  How long to run MCMC before saving samples.
+
+- thin:
+
+  How often to save MCMC samples, default is 1, saves every iteration.
+  Increase this if running out of memory.
+
+- save_ypred:
+
+  Whether or not to output the predicted values at every iteration
+
+- print_iter:
+
+  How often to print the iteration number of the MCMC chain.
+
+- print_progress:
+
+  Whether or not to print the iteration number of the MCMC chain.
+
 - ltPrior:
 
   Parameters for a gamma prior and MH update controls for temporal
@@ -123,7 +101,7 @@ ZINB_GP(
 
 - lsPrior:
 
-  Parameters for a gamma prior and MH update controls for spatial
+  Parameters for a gamma prior and MH update controls for temporal
   lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain
   all listed values.
 
@@ -140,6 +118,11 @@ ZINB_GP(
 
   MH standard deviation for proposal distribution for r, change if r
   seems to be walking too slowly. Default is 0.4.
+
+- kern:
+
+  Kernel function, takes a distance matrix and length scale, returns
+  evaluated kernel. e.g. function(dist, ls) return(exp(-dist / (ls^2)))
 
 ## Value
 

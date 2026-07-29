@@ -4,11 +4,23 @@
 
 - [`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md)
   : ZINB_GP
+- [`ZINB_GP_count()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_count.md)
+  : ZINB_GP_count
+- [`ZINB_GP_inflation()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_inflation.md)
+  : ZINB_GP_inflation
+- [`ZINB_GP_orig()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_orig.md)
+  : ZINB_GP_orig
 - [`ZINB_GP_spatial()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_spatial.md)
   : ZINB_GP_spatial
-- [`ZINB_GP_spatial2()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_spatial2.md)
-  : ZINB_GP_spatial2
+- [`ZINB_GP_spatial_count()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_spatial_count.md)
+  : ZINB_GP_spatial_count
+- [`ZINB_GP_spatial_inflation()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_spatial_inflation.md)
+  : ZINB_GP_spatial_inflation
 - [`estimate()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate.md)
+  : estimate
+- [`estimate_noab()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate_noab.md)
+  : estimate
+- [`estimate_nocd()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate_nocd.md)
   : estimate
 - [`gp_param_bounds()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/gp_param_bounds.md)
   : gp_param_bounds
