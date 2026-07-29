@@ -20,3 +20,10 @@ A list with the following elements:
 \description{
 Create y, along with spatial and temporal design matrices from an observation matrix.
 }
+\examples{
+counts <- matrix(c(0, 1, 2, 0, 1, 3), nrow = 2)
+design <- make_y_Vs_Vt(counts)
+design$y
+design$Vs
+design$Vt
+}

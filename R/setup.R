@@ -9,6 +9,12 @@
 #'   \item{Vs}{Spatial design matrix mapping observations to locations.}
 #'   \item{Vt}{Temporal design matrix mapping observations to times.}
 #' }
+#' @examples
+#' counts <- matrix(c(0, 1, 2, 0, 1, 3), nrow = 2)
+#' design <- make_y_Vs_Vt(counts)
+#' design$y
+#' design$Vs
+#' design$Vt
 #' @export
 #' @importFrom Matrix sparseMatrix
 make_y_Vs_Vt <- function(obs_matrix) {

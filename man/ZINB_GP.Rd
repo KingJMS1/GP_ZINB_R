@@ -103,3 +103,30 @@ At least one spatial or temporal GP must be active in the count or
 zero-inflation component. Models with no active GP are outside this entry
 point and return \code{NULL} with an explanatory message.
 }
+\examples{
+# A small synthetic spatial example.
+cells <- expand.grid(spatial = seq_len(4), replicate = seq_len(12))
+Vs <- diag(4)[cells$spatial, -1, drop = FALSE]
+y <- c(
+  0, 0, 0, 0, 15, 1, 0, 0, 6, 0, 0, 0, 1, 6, 0, 0,
+  0, 0, 0, 1, 11, 0, 0, 0, 2, 0, 0, 0, 8, 0, 5, 0,
+  0, 4, 0, 0, 34, 0, 1, 0, 0, 2, 0, 1, 0, 0, 0, 3
+)
+X <- cbind("(Intercept)" = 1, x = as.numeric(scale(seq_along(y))))
+coords <- rbind(c(0, 0), c(1000, 0), c(0, 1000), c(1000, 1000))
+
+set.seed(1)
+fit <- ZINB_GP(
+  X = X,
+  y = y,
+  coords = coords,
+  nsim = 5,
+  burn = 1,
+  thin = 2,
+  use_count_gp = TRUE,
+  use_inflation_gp = FALSE,
+  Vs = Vs,
+  Ds = as.matrix(stats::dist(coords))
+)
+names(fit)
+}

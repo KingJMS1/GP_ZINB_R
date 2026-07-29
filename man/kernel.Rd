@@ -2,15 +2,22 @@
 % Please edit documentation in R/ZINB_GP.R
 \name{kernel}
 \alias{kernel}
-\title{kernel}
+\title{Squared Exponential Kernel}
 \usage{
 kernel(dist, ls)
 }
 \arguments{
-\item{dist}{Distance matrix}
+\item{dist}{Numeric distance matrix.}
 
-\item{ls}{length scale}
+\item{ls}{Positive length scale.}
+}
+\value{
+A numeric kernel matrix with the same dimensions as \code{dist}.
 }
 \description{
-Create the squared exponential kernel matrix e^(-dist / (ls^2))
+Creates the kernel matrix \code{exp(-dist / ls^2)}.
+}
+\examples{
+distances <- as.matrix(stats::dist(c(0, 1, 3)))
+kernel(distances, ls = 2)
 }

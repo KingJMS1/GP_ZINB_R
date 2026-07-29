@@ -1,19 +1,31 @@
-#' noise_mix
-#' @description Create the following matrix: ratio * A + (1-ratio) * I
-#' 
-#' @param A Matrix to normalize (square)
-#' @param noise_ratio Noise mixing ratio
-#' @export 
+#' Mix a Matrix with Identity Noise
+#'
+#' @description Creates `noise_ratio * A + (1 - noise_ratio) * I`.
+#'
+#' @param A Numeric square matrix.
+#' @param noise_ratio Numeric mixing ratio between zero and one.
+#'
+#' @return A numeric square matrix with the same dimensions as `A`.
+#' @examples
+#' correlation <- matrix(c(1, 0.5, 0.5, 1), nrow = 2)
+#' noise_mix(correlation, noise_ratio = 0.8)
+#' @export
 noise_mix <- function(A, noise_ratio) {
     return(noise_ratio * A + diag(1 - noise_ratio, nrow=nrow(A)))
 }
 
-#' kernel
-#' @description Create the squared exponential kernel matrix e^(-dist / (ls^2))
-#' 
-#' @param dist Distance matrix
-#' @param ls length scale
-#' @export 
+#' Squared Exponential Kernel
+#'
+#' @description Creates the kernel matrix `exp(-dist / ls^2)`.
+#'
+#' @param dist Numeric distance matrix.
+#' @param ls Positive length scale.
+#'
+#' @return A numeric kernel matrix with the same dimensions as `dist`.
+#' @examples
+#' distances <- as.matrix(stats::dist(c(0, 1, 3)))
+#' kernel(distances, ls = 2)
+#' @export
 kernel <- function(dist, ls) {
     return(exp(-dist / (ls^2)))
 }

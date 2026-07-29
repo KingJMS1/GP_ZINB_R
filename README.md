@@ -1,18 +1,24 @@
 # ZINB.GP
 
 `ZINB.GP` fits the Bayesian zero-inflated negative-binomial Gaussian-process
-model described in [He and Huang (2023)](https://doi.org/10.1016/j.jspi.2023.106098).
+model described in [He and Huang (2024)](https://doi.org/10.1016/j.jspi.2023.106098).
 The `ZINB_GP()` entry point selects the appropriate spatial, temporal, or
 spatial-temporal model from the supplied design matrices and the two
 `use_*_gp` switches.
 
 ## Installation
 
-Install the package and its dependencies from GitHub:
+After its CRAN release, install the package with:
 
 ```r
-install.packages(c("BayesLogit", "LaplacesDemon", "MASS", "Matrix", "msm", "mvtnorm"))
-remotes::install_github("KingJMS1/NNGP_ZINB_R")
+install.packages("ZINB.GP")
+```
+
+Install the development version from GitHub with:
+
+```r
+# install.packages("remotes")
+remotes::install_github("KingJMS1/GP_ZINB_R")
 ```
 
 ## Complete example

@@ -9,4 +9,5 @@
 ^tmp$
 ^ZINB\.GP_.*\.tar\.gz$
 ^ZINB\.GP\.Rcheck$
+^cran-comments\.md$
 ^\..*

@@ -2,15 +2,22 @@
 % Please edit documentation in R/ZINB_GP.R
 \name{noise_mix}
 \alias{noise_mix}
-\title{noise_mix}
+\title{Mix a Matrix with Identity Noise}
 \usage{
 noise_mix(A, noise_ratio)
 }
 \arguments{
-\item{A}{Matrix to normalize (square)}
+\item{A}{Numeric square matrix.}
 
-\item{noise_ratio}{Noise mixing ratio}
+\item{noise_ratio}{Numeric mixing ratio between zero and one.}
+}
+\value{
+A numeric square matrix with the same dimensions as \code{A}.
 }
 \description{
-Create the following matrix: ratio * A + (1-ratio) * I
+Creates \code{noise_ratio * A + (1 - noise_ratio) * I}.
+}
+\examples{
+correlation <- matrix(c(1, 0.5, 0.5, 1), nrow = 2)
+noise_mix(correlation, noise_ratio = 0.8)
 }

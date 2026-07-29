@@ -1,0 +1,7 @@
+The analysis files under inst/extdata/oregon are substantially transformed
+and summarized analytical artifacts prepared by the package authors. They
+include aggregated model inputs, derived distance and coordinate data, and
+saved posterior summaries. These files are distributed under the same MIT
+license as the package.
+
+Copyright (c) 2026 Hsin-Hsiung Huang
