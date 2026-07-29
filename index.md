@@ -1,69 +1,175 @@
-# ZINB GP Bayesian Model
+# ZINB.GP
 
-This package implements a full Gaussian Process version of the model
-described in “A Framework of Zero-Inflated Bayesian Negative Binomial
-Regression Models For Spatiotemporal Data” by Qing He and Hsin-Hsiung
-Huang (2023). <https://doi.org/10.1016/j.jspi.2023.106098>, the full
-details of this model will appear in “Imaging-derived spatiotemporal
-modeling of landslide counts with noisy Gaussian process random
-effects.”
+`ZINB.GP` fits the Bayesian zero-inflated negative-binomial
+Gaussian-process model described in [He and Huang
+(2023)](https://doi.org/10.1016/j.jspi.2023.106098). The
+[`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md)
+entry point selects the appropriate spatial, temporal, or
+spatial-temporal model from the supplied design matrices and the two
+`use_*_gp` switches.
 
-This package is a work in progress, feel free to create an issue if you
-have suggestions or notice any problems.
+## Installation
 
-## Installation Instructions
-
-Install the devtools R package, then run the following command
+Install the package and its dependencies from GitHub:
 
 ``` r
 
 install.packages(c("BayesLogit", "LaplacesDemon", "MASS", "Matrix", "msm", "mvtnorm"))
-devtools::install_github("KingJMS1/NNGP_ZINB_R")
+remotes::install_github("KingJMS1/NNGP_ZINB_R")
 ```
 
-## Example Use
+## Complete example
 
-Detailed examples with full code can be found in the vignettes folder,
-source and data for which can be found at the experiments repository:
-<https://github.com/KingJMS1/ZINB_R_Experiments>.
-
-    X          Other Predictor variables
-    y          Zero inflated count response
-    coords     Spatial coordinates for GP
-    Vs         Spatially varying predictor variables
-               (e.g. one-hot indication of which location this is for varying intercept),
-               wrapped in sparseMatrix from Matrix R package.
-               Will be multiplied by the spatial random effects for prediction.
-    Vt         Temporal varying predictor variables, wrapped in sparseMatrix from Matrix R package.
-               Will be multiplied by the temporal random effects for prediction.
-    Ds         Spatial distance matrix, diagonal should be 0,
-               off diagonal is distance between elements i and j in space, inputs to the spatial GP kernel
-    Dt         Temporal distance matirx, diagonal should be 0,
-               off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel
-    nsim       How long to run MCMC in total, must be greater than burn.
-    burn       How long to run MCMC before saving samples.
-    thin       Thinning ratio for chain, increase if running out of memory.
-    ltPrior    Prior for temporal length scale, formatted as: list(max=50, mh_sd=3, a=1, b=0.001). a/b for gamma prior, max sets how high it is allowed to go, mh_sd controls the proposal variance for mh.
-    lsPrior    Prior for spatial length scale, formatted the same as ltPrior.
-    sigmaPrior Prior for sigmas in model, formatted as: list(a=0.01, b=0.1), inverse gamma prior
-    noisePrior Prior for signal to noise ratio, formatter as: list(a=1.5, b=1.5, mh_sd=0.2), mh_sd controls the proposal variance for mh.
-    mh_sd_r    Control mh proposal variance for r to deal with convergence issues
-    kern       Covariance kernel, takes a squared distance matrix, returns kernel covariance.
-
-Given all of the above, predictions can then be found via:
+This example fits the full model, with spatial and temporal
+Gaussian-process (GP) effects in both the zero-inflation and count
+components. Rows of `counts` are spatial locations and columns are time
+points.
+[`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md)
+turns this grid into the response and random-effect design matrices
+expected by
+[`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md).
 
 ``` r
 
 library(ZINB.GP)
-output <- ZINB_GP(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, save_ypred = TRUE)
-predictions <- output$Y_pred
+
+set.seed(1)
+
+# Counts at four locations over three time points.
+counts <- matrix(
+    c(0, 1, 0,
+      2, 0, 1,
+      0, 3, 1,
+      1, 0, 2),
+    nrow = 4,
+    byrow = TRUE
+)
+
+setup <- make_y_Vs_Vt(counts)
+y <- setup$y
+Vs <- setup$Vs
+Vt <- setup$Vt
+
+# One row per element of y: an intercept and an observation-level covariate.
+X <- cbind(
+    intercept = 1,
+    covariate = scale(seq_along(y))[, 1]
+)
+
+# One coordinate pair per row of counts and one time coordinate per column.
+coords <- rbind(
+    c(0, 0), c(1, 0), c(0, 1), c(1, 1)
+)
+Ds <- as.matrix(dist(coords))
+Dt <- as.matrix(dist(seq_len(ncol(counts))))
+
+fit <- ZINB_GP(
+    X = X,
+    y = y,
+    coords = coords,
+    nsim = 1000,
+    burn = 200,
+    use_count_gp = TRUE,
+    use_inflation_gp = TRUE,
+    thin = 1,
+    save_ypred = TRUE,
+    print_progress = TRUE,
+    print_iter = 100,
+    Vs = Vs,
+    Vt = Vt,
+    Ds = Ds,
+    Dt = Dt
+)
+
+# Posterior summaries for the fixed effects.
+apply(fit$Alpha, 2, quantile, probs = c(0.025, 0.5, 0.975))
+apply(fit$Beta, 2, quantile, probs = c(0.025, 0.5, 0.975))
+
+# With save_ypred = TRUE, rows are saved MCMC iterations and columns are
+# observations. These are posterior predictive count draws for this full model.
+posterior_mean_count <- colMeans(fit$Y_pred)
+posterior_at_risk_probability <- colMeans(fit$at_risk)
 ```
 
-The spatial and temporal design matrices, along with y can be created
-from a matrix-format y (rows are spatial locations, columns are temporal
-locations) via make_y_Vs_Vt.
+Use substantially longer chains than this small demonstration for
+analysis; assess convergence and effective sample sizes before
+interpreting estimates.
 
-## API Reference
+## Inputs to `ZINB_GP()`
 
-API reference:
-<https://kingjms1.github.io/GP_ZINB_R/reference/index.html>
+| Argument | Description |
+|----|----|
+| `X` | Numeric fixed-effect design matrix with one row per observation. Include an intercept column if required. |
+| `y` | Non-negative integer response vector, with one entry per row of `X`. |
+| `coords` | Spatial coordinates for the legacy spatial-temporal implementation. Supply one row per spatial location when using both spatial and temporal GPs. |
+| `nsim` | Total MCMC iterations. It must be greater than `burn`; defaults to 5000. |
+| `burn` | Number of initial MCMC iterations to discard; defaults to 1000. |
+| `use_count_gp` | Logical: include GP random effects in the negative-binomial count component. Defaults to `TRUE`. |
+| `use_inflation_gp` | Logical: include GP random effects in the zero-inflation component. Defaults to `FALSE`. At least one of the two GP switches must be `TRUE`. |
+| `thin` | Save every `thin`-th post-burn-in iteration; defaults to 1. |
+| `kern` | Optional kernel function with arguments `(distance_matrix, length_scale)`. The default is the package squared-exponential kernel. |
+| `save_ypred` | Logical: retain posterior predictive draws and at-risk indicators. Defaults to `FALSE`. |
+| `print_iter` | Print progress after this many iterations when `print_progress = TRUE`; defaults to 100. |
+| `print_progress` | Logical: print MCMC progress; defaults to `FALSE`. |
+| `Vs` | Spatial random-effect design matrix with one row per observation. [`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md) creates it from a location-by-time count matrix. Set to `NULL` when no spatial GP is wanted. |
+| `Vt` | Temporal random-effect design matrix with one row per observation. [`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md) creates it from a location-by-time count matrix. Set to `NULL` when no temporal GP is wanted. |
+| `Ds` | Square spatial distance matrix, including the baseline location. Its diagonal must be zero and it must correspond to `Vs`. |
+| `Dt` | Square temporal distance matrix, including the baseline time point. Its diagonal must be zero and it must correspond to `Vt`. |
+| `ltPrior` | Optional list of temporal-length-scale controls: `list(max, mh_sd, a, b)`, where `a` and `b` parameterize the gamma prior and `mh_sd` is the proposal standard deviation. |
+| `lsPrior` | Optional list of spatial-length-scale controls: `list(max, mh_sd, a, b)`. |
+| `sigmaPrior` | Optional list of inverse-gamma GP-scale prior parameters: `list(a, b)`. |
+| `noisePrior` | Optional list of GP noise-ratio controls: `list(a, b, mh_sd)`, where `a` and `b` parameterize the beta prior. |
+| `mh_sd_r` | Optional Metropolis-Hastings proposal standard deviation for the negative-binomial dispersion parameter. |
+
+[`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md)
+uses the first spatial location and first time point as baselines.
+Consequently, its `Vs` and `Vt` matrices have one fewer column than the
+respective dimensions of `Ds` and `Dt`; do not remove the first row and
+column from either distance matrix.
+
+### Selecting the model
+
+Provide `Vs`/`Ds` for spatial effects, `Vt`/`Dt` for temporal effects,
+or both for a spatial-temporal model. The GP switches choose the
+components to which those effects apply:
+
+| `use_inflation_gp` | `use_count_gp` | Fitted GP effects |
+|----|----|----|
+| `TRUE` | `TRUE` | Both zero-inflation and count components. |
+| `TRUE` | `FALSE` | Zero-inflation component only. |
+| `FALSE` | `TRUE` | Count component only. |
+| `FALSE` | `FALSE` | Not supported; use a non-GP ZINB model instead. |
+
+## Output
+
+[`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md)
+returns a named list of saved posterior draws. The exact elements depend
+on the supplied spatial/temporal matrices and on the selected GP
+components. With both spatial and temporal GPs enabled in both
+components, the list contains the following elements.
+
+| Element | Description |
+|----|----|
+| `Alpha` | Matrix of fixed-effect draws for the zero-inflation component. |
+| `Beta` | Matrix of fixed-effect draws for the negative-binomial count component. |
+| `A`, `B` | Matrices of spatial (`A`) and temporal (`B`) random-effect draws for the zero-inflation component. |
+| `C`, `D` | Matrices of spatial (`C`) and temporal (`D`) random-effect draws for the count component. |
+| `L1s`, `L2s` | Spatial GP length-scale draws for the zero-inflation and count components, respectively. |
+| `Sigma1s`, `Sigma2s` | Spatial GP scale draws for the zero-inflation and count components. |
+| `Noise1s`, `Noise2s` | Spatial GP kernel-to-noise mixing-ratio draws for the zero-inflation and count components. |
+| `L1t`, `L2t` | Temporal GP length-scale draws for the zero-inflation and count components. |
+| `Sigma1t`, `Sigma2t` | Temporal GP scale draws for the zero-inflation and count components. |
+| `Noise1t`, `Noise2t` | Temporal GP kernel-to-noise mixing-ratio draws for the zero-inflation and count components. |
+| `R` | Vector of negative-binomial dispersion-parameter draws. |
+| `Y_pred` | Matrix of posterior predictive count draws, included only when `save_ypred = TRUE`. |
+| `at_risk` | Matrix of sampled at-risk indicators, included only when `save_ypred = TRUE`. |
+
+When a GP component or spatial/temporal dimension is omitted, the
+corresponding random-effect and GP-parameter elements are omitted from
+the result. Check `names(fit)` to see the elements returned for a
+particular configuration.
+
+## Further information
+
+The package reference is available at
+<https://kingjms1.github.io/GP_ZINB_R/reference/index.html>.

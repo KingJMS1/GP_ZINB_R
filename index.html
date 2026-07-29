@@ -58,55 +58,308 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="zinb-gp-bayesian-model">ZINB GP Bayesian Model<a class="anchor" aria-label="anchor" href="#zinb-gp-bayesian-model"></a>
+<div class="page-header"><h1 id="zinbgp">ZINB.GP<a class="anchor" aria-label="anchor" href="#zinbgp"></a>
 </h1></div>
-<p>This package implements a full Gaussian Process version of the model described in “A Framework of Zero-Inflated Bayesian Negative Binomial Regression Models For Spatiotemporal Data” by Qing He and Hsin-Hsiung Huang (2023). <a href="https://doi.org/10.1016/j.jspi.2023.106098" class="external-link uri">https://doi.org/10.1016/j.jspi.2023.106098</a>, the full details of this model will appear in “Imaging-derived spatiotemporal modeling of landslide counts with noisy Gaussian process random effects.”</p>
-<p>This package is a work in progress, feel free to create an issue if you have suggestions or notice any problems.</p>
+<p><code>ZINB.GP</code> fits the Bayesian zero-inflated negative-binomial Gaussian-process model described in <a href="https://doi.org/10.1016/j.jspi.2023.106098" class="external-link">He and Huang (2023)</a>. The <code><a href="reference/ZINB_GP.html">ZINB_GP()</a></code> entry point selects the appropriate spatial, temporal, or spatial-temporal model from the supplied design matrices and the two <code>use_*_gp</code> switches.</p>
 <div class="section level2">
-<h2 id="installation-instructions">Installation Instructions<a class="anchor" aria-label="anchor" href="#installation-instructions"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install the devtools R package, then run the following command</p>
+<p>Install the package and its dependencies from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BayesLogit"</span>, <span class="st">"LaplacesDemon"</span>, <span class="st">"MASS"</span>, <span class="st">"Matrix"</span>, <span class="st">"msm"</span>, <span class="st">"mvtnorm"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"KingJMS1/NNGP_ZINB_R"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"KingJMS1/NNGP_ZINB_R"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example-use">Example Use<a class="anchor" aria-label="anchor" href="#example-use"></a>
+<h2 id="complete-example">Complete example<a class="anchor" aria-label="anchor" href="#complete-example"></a>
 </h2>
-<p>Detailed examples with full code can be found in the vignettes folder, source and data for which can be found at the experiments repository: <a href="https://github.com/KingJMS1/ZINB_R_Experiments" class="external-link uri">https://github.com/KingJMS1/ZINB_R_Experiments</a>.</p>
-<pre><code>X          Other Predictor variables
-y          Zero inflated count response
-coords     Spatial coordinates for GP
-Vs         Spatially varying predictor variables
-           (e.g. one-hot indication of which location this is for varying intercept),
-           wrapped in sparseMatrix from Matrix R package.
-           Will be multiplied by the spatial random effects for prediction.
-Vt         Temporal varying predictor variables, wrapped in sparseMatrix from Matrix R package.
-           Will be multiplied by the temporal random effects for prediction.
-Ds         Spatial distance matrix, diagonal should be 0,
-           off diagonal is distance between elements i and j in space, inputs to the spatial GP kernel
-Dt         Temporal distance matirx, diagonal should be 0,
-           off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel
-nsim       How long to run MCMC in total, must be greater than burn.
-burn       How long to run MCMC before saving samples.
-thin       Thinning ratio for chain, increase if running out of memory.
-ltPrior    Prior for temporal length scale, formatted as: list(max=50, mh_sd=3, a=1, b=0.001). a/b for gamma prior, max sets how high it is allowed to go, mh_sd controls the proposal variance for mh.
-lsPrior    Prior for spatial length scale, formatted the same as ltPrior.
-sigmaPrior Prior for sigmas in model, formatted as: list(a=0.01, b=0.1), inverse gamma prior
-noisePrior Prior for signal to noise ratio, formatter as: list(a=1.5, b=1.5, mh_sd=0.2), mh_sd controls the proposal variance for mh.
-mh_sd_r    Control mh proposal variance for r to deal with convergence issues
-kern       Covariance kernel, takes a squared distance matrix, returns kernel covariance.</code></pre>
-<p>Given all of the above, predictions can then be found via:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>This example fits the full model, with spatial and temporal Gaussian-process (GP) effects in both the zero-inflation and count components. Rows of <code>counts</code> are spatial locations and columns are time points. <code><a href="reference/make_y_Vs_Vt.html">make_y_Vs_Vt()</a></code> turns this grid into the response and random-effect design matrices expected by <code><a href="reference/ZINB_GP.html">ZINB_GP()</a></code>.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://kingjms1.github.io/GP_ZINB_R/" class="external-link">ZINB.GP</a></span><span class="op">)</span></span>
-<span><span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ZINB_GP.html">ZINB_GP</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">y</span>, <span class="va">coords</span>, <span class="va">Vs</span>, <span class="va">Vt</span>, <span class="va">Ds</span>, <span class="va">Dt</span>, <span class="va">nsim</span>, <span class="va">burn</span>, save_ypred <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">predictions</span> <span class="op">&lt;-</span> <span class="va">output</span><span class="op">$</span><span class="va">Y_pred</span></span></code></pre></div>
-<p>The spatial and temporal design matrices, along with y can be created from a matrix-format y (rows are spatial locations, columns are temporal locations) via make_y_Vs_Vt.</p>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Counts at four locations over three time points.</span></span>
+<span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0</span>,</span>
+<span>      <span class="fl">2</span>, <span class="fl">0</span>, <span class="fl">1</span>,</span>
+<span>      <span class="fl">0</span>, <span class="fl">3</span>, <span class="fl">1</span>,</span>
+<span>      <span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>    nrow <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>    byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">setup</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/make_y_Vs_Vt.html">make_y_Vs_Vt</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">setup</span><span class="op">$</span><span class="va">y</span></span>
+<span><span class="va">Vs</span> <span class="op">&lt;-</span> <span class="va">setup</span><span class="op">$</span><span class="va">Vs</span></span>
+<span><span class="va">Vt</span> <span class="op">&lt;-</span> <span class="va">setup</span><span class="op">$</span><span class="va">Vt</span></span>
+<span></span>
+<span><span class="co"># One row per element of y: an intercept and an observation-level covariate.</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span></span>
+<span>    intercept <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    covariate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># One coordinate pair per row of counts and one time coordinate per column.</span></span>
+<span><span class="va">coords</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">Ds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">coords</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">Dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ZINB_GP.html">ZINB_GP</a></span><span class="op">(</span></span>
+<span>    X <span class="op">=</span> <span class="va">X</span>,</span>
+<span>    y <span class="op">=</span> <span class="va">y</span>,</span>
+<span>    coords <span class="op">=</span> <span class="va">coords</span>,</span>
+<span>    nsim <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>    burn <span class="op">=</span> <span class="fl">200</span>,</span>
+<span>    use_count_gp <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    use_inflation_gp <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    thin <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    save_ypred <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    print_progress <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    print_iter <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>    Vs <span class="op">=</span> <span class="va">Vs</span>,</span>
+<span>    Vt <span class="op">=</span> <span class="va">Vt</span>,</span>
+<span>    Ds <span class="op">=</span> <span class="va">Ds</span>,</span>
+<span>    Dt <span class="op">=</span> <span class="va">Dt</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Posterior summaries for the fixed effects.</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">Alpha</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.5</span>, <span class="fl">0.975</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">Beta</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.5</span>, <span class="fl">0.975</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># With save_ypred = TRUE, rows are saved MCMC iterations and columns are</span></span>
+<span><span class="co"># observations. These are posterior predictive count draws for this full model.</span></span>
+<span><span class="va">posterior_mean_count</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">Y_pred</span><span class="op">)</span></span>
+<span><span class="va">posterior_at_risk_probability</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colMeans</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">at_risk</span><span class="op">)</span></span></code></pre></div>
+<p>Use substantially longer chains than this small demonstration for analysis; assess convergence and effective sample sizes before interpreting estimates.</p>
 </div>
 <div class="section level2">
-<h2 id="api-reference">API Reference<a class="anchor" aria-label="anchor" href="#api-reference"></a>
+<h2 id="inputs-to-zinb_gp">Inputs to <code>ZINB_GP()</code>
+<a class="anchor" aria-label="anchor" href="#inputs-to-zinb_gp"></a>
 </h2>
-<p>API reference: <a href="https://kingjms1.github.io/GP_ZINB_R/reference/index.html" class="external-link uri">https://kingjms1.github.io/GP_ZINB_R/reference/index.html</a></p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Argument</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>X</code></td>
+<td>Numeric fixed-effect design matrix with one row per observation. Include an intercept column if required.</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td>Non-negative integer response vector, with one entry per row of <code>X</code>.</td>
+</tr>
+<tr>
+<td><code>coords</code></td>
+<td>Spatial coordinates for the legacy spatial-temporal implementation. Supply one row per spatial location when using both spatial and temporal GPs.</td>
+</tr>
+<tr>
+<td><code>nsim</code></td>
+<td>Total MCMC iterations. It must be greater than <code>burn</code>; defaults to 5000.</td>
+</tr>
+<tr>
+<td><code>burn</code></td>
+<td>Number of initial MCMC iterations to discard; defaults to 1000.</td>
+</tr>
+<tr>
+<td><code>use_count_gp</code></td>
+<td>Logical: include GP random effects in the negative-binomial count component. Defaults to <code>TRUE</code>.</td>
+</tr>
+<tr>
+<td><code>use_inflation_gp</code></td>
+<td>Logical: include GP random effects in the zero-inflation component. Defaults to <code>FALSE</code>. At least one of the two GP switches must be <code>TRUE</code>.</td>
+</tr>
+<tr>
+<td><code>thin</code></td>
+<td>Save every <code>thin</code>-th post-burn-in iteration; defaults to 1.</td>
+</tr>
+<tr>
+<td><code>kern</code></td>
+<td>Optional kernel function with arguments <code>(distance_matrix, length_scale)</code>. The default is the package squared-exponential kernel.</td>
+</tr>
+<tr>
+<td><code>save_ypred</code></td>
+<td>Logical: retain posterior predictive draws and at-risk indicators. Defaults to <code>FALSE</code>.</td>
+</tr>
+<tr>
+<td><code>print_iter</code></td>
+<td>Print progress after this many iterations when <code>print_progress = TRUE</code>; defaults to 100.</td>
+</tr>
+<tr>
+<td><code>print_progress</code></td>
+<td>Logical: print MCMC progress; defaults to <code>FALSE</code>.</td>
+</tr>
+<tr>
+<td><code>Vs</code></td>
+<td>Spatial random-effect design matrix with one row per observation. <code><a href="reference/make_y_Vs_Vt.html">make_y_Vs_Vt()</a></code> creates it from a location-by-time count matrix. Set to <code>NULL</code> when no spatial GP is wanted.</td>
+</tr>
+<tr>
+<td><code>Vt</code></td>
+<td>Temporal random-effect design matrix with one row per observation. <code><a href="reference/make_y_Vs_Vt.html">make_y_Vs_Vt()</a></code> creates it from a location-by-time count matrix. Set to <code>NULL</code> when no temporal GP is wanted.</td>
+</tr>
+<tr>
+<td><code>Ds</code></td>
+<td>Square spatial distance matrix, including the baseline location. Its diagonal must be zero and it must correspond to <code>Vs</code>.</td>
+</tr>
+<tr>
+<td><code>Dt</code></td>
+<td>Square temporal distance matrix, including the baseline time point. Its diagonal must be zero and it must correspond to <code>Vt</code>.</td>
+</tr>
+<tr>
+<td><code>ltPrior</code></td>
+<td>Optional list of temporal-length-scale controls: <code>list(max, mh_sd, a, b)</code>, where <code>a</code> and <code>b</code> parameterize the gamma prior and <code>mh_sd</code> is the proposal standard deviation.</td>
+</tr>
+<tr>
+<td><code>lsPrior</code></td>
+<td>Optional list of spatial-length-scale controls: <code>list(max, mh_sd, a, b)</code>.</td>
+</tr>
+<tr>
+<td><code>sigmaPrior</code></td>
+<td>Optional list of inverse-gamma GP-scale prior parameters: <code>list(a, b)</code>.</td>
+</tr>
+<tr>
+<td><code>noisePrior</code></td>
+<td>Optional list of GP noise-ratio controls: <code>list(a, b, mh_sd)</code>, where <code>a</code> and <code>b</code> parameterize the beta prior.</td>
+</tr>
+<tr>
+<td><code>mh_sd_r</code></td>
+<td>Optional Metropolis-Hastings proposal standard deviation for the negative-binomial dispersion parameter.</td>
+</tr>
+</tbody>
+</table>
+<p><code><a href="reference/make_y_Vs_Vt.html">make_y_Vs_Vt()</a></code> uses the first spatial location and first time point as baselines. Consequently, its <code>Vs</code> and <code>Vt</code> matrices have one fewer column than the respective dimensions of <code>Ds</code> and <code>Dt</code>; do not remove the first row and column from either distance matrix.</p>
+<div class="section level3">
+<h3 id="selecting-the-model">Selecting the model<a class="anchor" aria-label="anchor" href="#selecting-the-model"></a>
+</h3>
+<p>Provide <code>Vs</code>/<code>Ds</code> for spatial effects, <code>Vt</code>/<code>Dt</code> for temporal effects, or both for a spatial-temporal model. The GP switches choose the components to which those effects apply:</p>
+<table class="table">
+<thead><tr>
+<th><code>use_inflation_gp</code></th>
+<th><code>use_count_gp</code></th>
+<th>Fitted GP effects</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>TRUE</code></td>
+<td><code>TRUE</code></td>
+<td>Both zero-inflation and count components.</td>
+</tr>
+<tr>
+<td><code>TRUE</code></td>
+<td><code>FALSE</code></td>
+<td>Zero-inflation component only.</td>
+</tr>
+<tr>
+<td><code>FALSE</code></td>
+<td><code>TRUE</code></td>
+<td>Count component only.</td>
+</tr>
+<tr>
+<td><code>FALSE</code></td>
+<td><code>FALSE</code></td>
+<td>Not supported; use a non-GP ZINB model instead.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section level2">
+<h2 id="output">Output<a class="anchor" aria-label="anchor" href="#output"></a>
+</h2>
+<p><code><a href="reference/ZINB_GP.html">ZINB_GP()</a></code> returns a named list of saved posterior draws. The exact elements depend on the supplied spatial/temporal matrices and on the selected GP components. With both spatial and temporal GPs enabled in both components, the list contains the following elements.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Element</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>Alpha</code></td>
+<td>Matrix of fixed-effect draws for the zero-inflation component.</td>
+</tr>
+<tr>
+<td><code>Beta</code></td>
+<td>Matrix of fixed-effect draws for the negative-binomial count component.</td>
+</tr>
+<tr>
+<td>
+<code>A</code>, <code>B</code>
+</td>
+<td>Matrices of spatial (<code>A</code>) and temporal (<code>B</code>) random-effect draws for the zero-inflation component.</td>
+</tr>
+<tr>
+<td>
+<code>C</code>, <code>D</code>
+</td>
+<td>Matrices of spatial (<code>C</code>) and temporal (<code>D</code>) random-effect draws for the count component.</td>
+</tr>
+<tr>
+<td>
+<code>L1s</code>, <code>L2s</code>
+</td>
+<td>Spatial GP length-scale draws for the zero-inflation and count components, respectively.</td>
+</tr>
+<tr>
+<td>
+<code>Sigma1s</code>, <code>Sigma2s</code>
+</td>
+<td>Spatial GP scale draws for the zero-inflation and count components.</td>
+</tr>
+<tr>
+<td>
+<code>Noise1s</code>, <code>Noise2s</code>
+</td>
+<td>Spatial GP kernel-to-noise mixing-ratio draws for the zero-inflation and count components.</td>
+</tr>
+<tr>
+<td>
+<code>L1t</code>, <code>L2t</code>
+</td>
+<td>Temporal GP length-scale draws for the zero-inflation and count components.</td>
+</tr>
+<tr>
+<td>
+<code>Sigma1t</code>, <code>Sigma2t</code>
+</td>
+<td>Temporal GP scale draws for the zero-inflation and count components.</td>
+</tr>
+<tr>
+<td>
+<code>Noise1t</code>, <code>Noise2t</code>
+</td>
+<td>Temporal GP kernel-to-noise mixing-ratio draws for the zero-inflation and count components.</td>
+</tr>
+<tr>
+<td><code>R</code></td>
+<td>Vector of negative-binomial dispersion-parameter draws.</td>
+</tr>
+<tr>
+<td><code>Y_pred</code></td>
+<td>Matrix of posterior predictive count draws, included only when <code>save_ypred = TRUE</code>.</td>
+</tr>
+<tr>
+<td><code>at_risk</code></td>
+<td>Matrix of sampled at-risk indicators, included only when <code>save_ypred = TRUE</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>When a GP component or spatial/temporal dimension is omitted, the corresponding random-effect and GP-parameter elements are omitted from the result. Check <code>names(fit)</code> to see the elements returned for a particular configuration.</p>
+</div>
+<div class="section level2">
+<h2 id="further-information">Further information<a class="anchor" aria-label="anchor" href="#further-information"></a>
+</h2>
+<p>The package reference is available at <a href="https://kingjms1.github.io/GP_ZINB_R/reference/index.html" class="external-link uri">https://kingjms1.github.io/GP_ZINB_R/reference/index.html</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
