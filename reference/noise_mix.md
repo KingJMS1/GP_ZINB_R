@@ -1,6 +1,6 @@
-# noise_mix
+# Mix a Matrix with Identity Noise
 
-Create the following matrix: ratio \* A + (1-ratio) \* I
+Creates `noise_ratio * A + (1 - noise_ratio) * I`.
 
 ## Usage
 
@@ -12,8 +12,22 @@ noise_mix(A, noise_ratio)
 
 - A:
 
-  Matrix to normalize (square)
+  Numeric square matrix.
 
 - noise_ratio:
 
-  Noise mixing ratio
+  Numeric mixing ratio between zero and one.
+
+## Value
+
+A numeric square matrix with the same dimensions as `A`.
+
+## Examples
+
+``` r
+correlation <- matrix(c(1, 0.5, 0.5, 1), nrow = 2)
+noise_mix(correlation, noise_ratio = 0.8)
+#>      [,1] [,2]
+#> [1,]  1.0  0.4
+#> [2,]  0.4  1.0
+```

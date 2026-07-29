@@ -53,7 +53,7 @@ mean(observations == 0)
 #> [1] 0.9084201
 ```
 
-[`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md)
+[`make_y_Vs_Vt()`](https://kingjms1.github.io/GP_ZINB_R/reference/make_y_Vs_Vt.md)
 flattens the matrix in column-major order. Its `Vs` and `Vt` rows follow
 the same order, and their first columns are removed to define the
 baseline county and year.

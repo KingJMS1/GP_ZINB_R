@@ -1,4 +1,4 @@
 # License
 
-    YEAR: 2024
-    COPYRIGHT HOLDER: Hsin-Hsiung Bill Huang
+    YEAR: 2026
+    COPYRIGHT HOLDER: Hsin-Hsiung Huang

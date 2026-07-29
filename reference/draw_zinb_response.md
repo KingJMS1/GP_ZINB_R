@@ -2,7 +2,7 @@
 
 Generates one posterior predictive count for each pair of at-risk and
 count linear predictors using the parameterization fitted by
-[`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md).
+[`ZINB_GP()`](https://kingjms1.github.io/GP_ZINB_R/reference/ZINB_GP.md).
 
 ## Usage
 

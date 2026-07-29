@@ -2,20 +2,27 @@
 
 `ZINB.GP` fits the Bayesian zero-inflated negative-binomial
 Gaussian-process model described in [He and Huang
-(2023)](https://doi.org/10.1016/j.jspi.2023.106098). The
-[`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md)
+(2024)](https://doi.org/10.1016/j.jspi.2023.106098). The
+[`ZINB_GP()`](https://kingjms1.github.io/GP_ZINB_R/reference/ZINB_GP.md)
 entry point selects the appropriate spatial, temporal, or
 spatial-temporal model from the supplied design matrices and the two
 `use_*_gp` switches.
 
 ## Installation
 
-Install the package and its dependencies from GitHub:
+After its CRAN release, install the package with:
 
 ``` r
 
-install.packages(c("BayesLogit", "LaplacesDemon", "MASS", "Matrix", "msm", "mvtnorm"))
-remotes::install_github("KingJMS1/NNGP_ZINB_R")
+install.packages("ZINB.GP")
+```
+
+Install the development version from GitHub with:
+
+``` r
+
+# install.packages("remotes")
+remotes::install_github("KingJMS1/GP_ZINB_R")
 ```
 
 ## Complete example
@@ -24,10 +31,10 @@ This example fits the full model, with spatial and temporal
 Gaussian-process (GP) effects in both the zero-inflation and count
 components. Rows of `counts` are spatial locations and columns are time
 points.
-[`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md)
+[`make_y_Vs_Vt()`](https://kingjms1.github.io/GP_ZINB_R/reference/make_y_Vs_Vt.md)
 turns this grid into the response and random-effect design matrices
 expected by
-[`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md).
+[`ZINB_GP()`](https://kingjms1.github.io/GP_ZINB_R/reference/ZINB_GP.md).
 
 ``` r
 
@@ -111,8 +118,8 @@ interpreting estimates.
 | `save_ypred` | Logical: retain posterior predictive draws and at-risk indicators. Defaults to `FALSE`. |
 | `print_iter` | Print progress after this many iterations when `print_progress = TRUE`; defaults to 100. |
 | `print_progress` | Logical: print MCMC progress; defaults to `FALSE`. |
-| `Vs` | Spatial random-effect design matrix with one row per observation. [`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md) creates it from a location-by-time count matrix. Set to `NULL` when no spatial GP is wanted. |
-| `Vt` | Temporal random-effect design matrix with one row per observation. [`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md) creates it from a location-by-time count matrix. Set to `NULL` when no temporal GP is wanted. |
+| `Vs` | Spatial random-effect design matrix with one row per observation. [`make_y_Vs_Vt()`](https://kingjms1.github.io/GP_ZINB_R/reference/make_y_Vs_Vt.md) creates it from a location-by-time count matrix. Set to `NULL` when no spatial GP is wanted. |
+| `Vt` | Temporal random-effect design matrix with one row per observation. [`make_y_Vs_Vt()`](https://kingjms1.github.io/GP_ZINB_R/reference/make_y_Vs_Vt.md) creates it from a location-by-time count matrix. Set to `NULL` when no temporal GP is wanted. |
 | `Ds` | Square spatial distance matrix, including the baseline location. Its diagonal must be zero and it must correspond to `Vs`. |
 | `Dt` | Square temporal distance matrix, including the baseline time point. Its diagonal must be zero and it must correspond to `Vt`. |
 | `ltPrior` | Optional list of temporal-length-scale controls: `list(max, mh_sd, a, b)`, where `a` and `b` parameterize the gamma prior and `mh_sd` is the proposal standard deviation. |
@@ -121,7 +128,7 @@ interpreting estimates.
 | `noisePrior` | Optional list of GP noise-ratio controls: `list(a, b, mh_sd)`, where `a` and `b` parameterize the beta prior. |
 | `mh_sd_r` | Optional Metropolis-Hastings proposal standard deviation for the negative-binomial dispersion parameter. |
 
-[`make_y_Vs_Vt()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/make_y_Vs_Vt.md)
+[`make_y_Vs_Vt()`](https://kingjms1.github.io/GP_ZINB_R/reference/make_y_Vs_Vt.md)
 uses the first spatial location and first time point as baselines.
 Consequently, its `Vs` and `Vt` matrices have one fewer column than the
 respective dimensions of `Ds` and `Dt`; do not remove the first row and
@@ -142,7 +149,7 @@ components to which those effects apply:
 
 ## Output
 
-[`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md)
+[`ZINB_GP()`](https://kingjms1.github.io/GP_ZINB_R/reference/ZINB_GP.md)
 returns a named list of saved posterior draws. The exact elements depend
 on the supplied spatial/temporal matrices and on the selected GP
 components. With both spatial and temporal GPs enabled in both

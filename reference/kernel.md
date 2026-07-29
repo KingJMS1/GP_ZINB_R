@@ -1,6 +1,6 @@
-# kernel
+# Squared Exponential Kernel
 
-Create the squared exponential kernel matrix e^(-dist / (ls^2))
+Creates the kernel matrix `exp(-dist / ls^2)`.
 
 ## Usage
 
@@ -12,8 +12,23 @@ kernel(dist, ls)
 
 - dist:
 
-  Distance matrix
+  Numeric distance matrix.
 
 - ls:
 
-  length scale
+  Positive length scale.
+
+## Value
+
+A numeric kernel matrix with the same dimensions as `dist`.
+
+## Examples
+
+``` r
+distances <- as.matrix(stats::dist(c(0, 1, 3)))
+kernel(distances, ls = 2)
+#>           1         2         3
+#> 1 1.0000000 0.7788008 0.4723666
+#> 2 0.7788008 1.0000000 0.6065307
+#> 3 0.4723666 0.6065307 1.0000000
+```

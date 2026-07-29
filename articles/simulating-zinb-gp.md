@@ -86,9 +86,9 @@ N
 
 An intercept together with every column of both one-hot indicator
 matrices is rank deficient.
-[`ZINB_GP_orig()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_orig.md),
+[`ZINB_GP_orig()`](https://kingjms1.github.io/GP_ZINB_R/reference/ZINB_GP_orig.md),
 and the full-GP route through
-[`ZINB_GP()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP.md),
+[`ZINB_GP()`](https://kingjms1.github.io/GP_ZINB_R/reference/ZINB_GP.md),
 use the first spatial level and first temporal level as baselines:
 
 - `X` contains an explicit intercept;
@@ -133,7 +133,7 @@ change the intended correlation pattern.
 The package squares the supplied distances before applying its default
 kernel. We do the same when generating the latent effects. The reduced
 covariance matrices exactly match the identified model fitted by
-[`ZINB_GP_orig()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_orig.md).
+[`ZINB_GP_orig()`](https://kingjms1.github.io/GP_ZINB_R/reference/ZINB_GP_orig.md).
 
 ``` r
 
