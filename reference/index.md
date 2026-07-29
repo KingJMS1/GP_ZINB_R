@@ -16,12 +16,6 @@
   : ZINB_GP_spatial_count
 - [`ZINB_GP_spatial_inflation()`](https://kingjms1.github.io/GP_ZINB_R/reference/ZINB_GP_spatial_inflation.md)
   : ZINB_GP_spatial_inflation
-- [`estimate()`](https://kingjms1.github.io/GP_ZINB_R/reference/estimate.md)
-  : Draw from the full posterior predictive distribution
-- [`estimate_noab()`](https://kingjms1.github.io/GP_ZINB_R/reference/estimate_noab.md)
-  : Draw posterior predictions without inflation random effects
-- [`estimate_nocd()`](https://kingjms1.github.io/GP_ZINB_R/reference/estimate_nocd.md)
-  : Draw posterior predictions without count random effects
 - [`gp_param_bounds()`](https://kingjms1.github.io/GP_ZINB_R/reference/gp_param_bounds.md)
   : gp_param_bounds
 - [`kernel()`](https://kingjms1.github.io/GP_ZINB_R/reference/kernel.md)
