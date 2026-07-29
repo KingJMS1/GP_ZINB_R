@@ -12,6 +12,12 @@ mvn_sample_svd(P_svd, mu, entropy = NULL, threshold = 1e-12)
 \item{mu}{Mean of MVN to draw from}
 
 \item{entropy}{Draw from MVN of correct size (can be used to draw all mvns at once for efficiency)}
+
+\item{threshold}{Singular values at or below this threshold are discarded.}
+}
+\value{
+A draw from the multivariate normal distribution with precision
+matrix represented by \code{P_svd}.
 }
 \description{
 Use SVD for precision matrix to sample from multivariate normal distribution

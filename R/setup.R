@@ -3,11 +3,11 @@
 #' make_y_Vs_Vt
 #' @description Create y, along with spatial and temporal design matrices from an observation matrix.
 #' @param obs_matrix s by t matrix, where s is the number of locations, t is the number of times, each entry of the matrix is a nonnegative integer.
-#' @return A List of the following values:          
-#' \itemize{
-#'      \item {\strong{y:} } {Flattened version of the observation matrix, flattened in column-major order.}
-#'      \item {\strong{Vs:} } {Spatial design matrix, indicates which elements in y correspond with which positions in space}
-#'      \item {\strong{Vt:} } {Temporal design matrix, indicates which elements in y correspond with which positions in time}
+#' @return A list with the following elements:
+#' \describe{
+#'   \item{y}{The observation matrix flattened in column-major order.}
+#'   \item{Vs}{Spatial design matrix mapping observations to locations.}
+#'   \item{Vt}{Temporal design matrix mapping observations to times.}
 #' }
 #' @export
 #' @importFrom Matrix sparseMatrix
@@ -36,7 +36,10 @@ make_y_Vs_Vt <- function(obs_matrix) {
 #' 
 #' @param Ds Spatial distance matrix
 #' @param Dt Temporal distance matrix
-#' @return Minimum values for l*s, maximum values for l*t 
+#' @param kernel Kernel function accepting a distance matrix and a length scale.
+#' @param tolerance Numerical tolerance used to assess matrix invertibility.
+#' @return A list containing the upper bounds `ltmax` and `lsmax` for the
+#'   temporal and spatial length scales, respectively.
 gp_param_bounds <- function(Ds, Dt, kernel, tolerance = 1e-10) {
     smin <- 1
     Ks <- kernel(Ds, 1 / smin)

@@ -34,15 +34,19 @@ update_ls_sigma_noise(
 
 \item{sigmaPrior}{prior information for sigma, needs a, b}
 
-\item{noisePrior}{prior information for noise_ratio, needs mh_sd, a, b
-#' @return A List of the following sampled values:
-\itemize{
-\item {\strong{ls:} } {Length scale}
-\item {\strong{sigma:} } {sigma}
-\item {\strong{noise_ratio:} } {noise ratio}
-\item {\strong{K:} } {Kernel matrix}
-\item {\strong{K_inv:} } {Inverse of kernel matrix}
-}}
+\item{noisePrior}{prior information for noise_ratio, needs mh_sd, a, b}
+
+\item{kern}{Kernel function accepting a distance matrix and a length scale.}
+}
+\value{
+A list with the following elements:
+\describe{
+\item{ls}{Updated length scale.}
+\item{sigma}{Updated GP scale.}
+\item{noise_ratio}{Updated kernel-to-noise mixing ratio.}
+\item{K}{Updated kernel matrix.}
+\item{K_inv}{Inverse of the updated kernel matrix.}
+}
 }
 \description{
 Update kernel parameters for a GP

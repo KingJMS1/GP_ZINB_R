@@ -2,10 +2,31 @@
 % Please edit documentation in R/estimation.R
 \name{estimate_noab}
 \alias{estimate_noab}
-\title{estimate}
+\title{Draw posterior predictions without inflation random effects}
 \usage{
 estimate_noab(X, alpha, beta, Vs, Vt, c, d, r)
 }
+\arguments{
+\item{X}{Fixed-effect design matrix.}
+
+\item{alpha}{Fixed-effect coefficients for the zero-inflation component.}
+
+\item{beta}{Fixed-effect coefficients for the count component.}
+
+\item{Vs}{Spatial random-effect design matrix.}
+
+\item{Vt}{Temporal random-effect design matrix.}
+
+\item{c}{Spatial random-effect draw for the count component.}
+
+\item{d}{Temporal random-effect draw for the count component.}
+
+\item{r}{Negative-binomial dispersion parameter.}
+}
+\value{
+A vector of posterior predictive count draws.
+}
 \description{
-Draw y from posterior distribution
+Draw a zero-inflated negative-binomial response conditional on
+fixed effects and count-component spatial and temporal random effects.
 }

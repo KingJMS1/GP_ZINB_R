@@ -9,10 +9,12 @@ solve_svd(A_svd, b, threshold = 1e-12)
 \arguments{
 \item{A_svd}{SVD of A}
 
-\item{b}{b}
+\item{b}{Right-hand-side vector or matrix.}
+
+\item{threshold}{Singular values at or below this threshold are discarded.}
 }
 \value{
-x
+The SVD-based solution to \code{A \%*\% x = b}.
 }
 \description{
 Use SVD to solve a linear system Ax=b

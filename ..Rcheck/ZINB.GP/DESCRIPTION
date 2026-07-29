@@ -14,13 +14,6 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 URL: https://kingjms1.github.io/GP_ZINB_R/
-Imports:
-    BayesLogit,
-    FastGP,
-    LaplacesDemon,
-    MASS,
-    Matrix,
-    msm,
-    mvtnorm,
-    spNNGP,
-    stats
+Imports: BayesLogit, FastGP, LaplacesDemon, MASS, Matrix, msm, mvtnorm,
+        spNNGP, stats
+Built: R 4.4.1; ; 2026-07-29 17:22:40 UTC; windows

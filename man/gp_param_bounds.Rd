@@ -10,9 +10,14 @@ gp_param_bounds(Ds, Dt, kernel, tolerance = 1e-10)
 \item{Ds}{Spatial distance matrix}
 
 \item{Dt}{Temporal distance matrix}
+
+\item{kernel}{Kernel function accepting a distance matrix and a length scale.}
+
+\item{tolerance}{Numerical tolerance used to assess matrix invertibility.}
 }
 \value{
-Minimum values for l\emph{s, maximum values for l}t
+A list containing the upper bounds \code{ltmax} and \code{lsmax} for the
+temporal and spatial length scales, respectively.
 }
 \description{
 Finds reasonable upper/lower bounds on gp parameters ensuring matrices remain pd invertible

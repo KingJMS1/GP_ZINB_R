@@ -26,6 +26,49 @@ ZINB_GP_count(
   kern = NULL
 )
 }
+\arguments{
+\item{X}{Fixed-effect design matrix with one row per observation.}
+
+\item{y}{Non-negative integer count response.}
+
+\item{coords}{Spatial coordinates for the NNGP approximation.}
+
+\item{Vs}{Spatial random-effect design matrix with one row per observation.}
+
+\item{Vt}{Temporal random-effect design matrix with one row per observation.}
+
+\item{Ds}{Spatial distance matrix; its diagonal must be zero.}
+
+\item{Dt}{Temporal distance matrix; its diagonal must be zero.}
+
+\item{nsim}{Total number of MCMC iterations; must exceed \code{burn}.}
+
+\item{burn}{Number of burn-in iterations.}
+
+\item{thin}{Store every \code{thin}-th iteration after burn-in.}
+
+\item{save_ypred}{Whether to save posterior predictive draws.}
+
+\item{print_iter}{Print progress every \code{print_iter} iterations.}
+
+\item{print_progress}{Whether to print MCMC progress.}
+
+\item{ltPrior}{List with \code{max}, \code{mh_sd}, \code{a}, and \code{b} for temporal length-scale prior and proposal controls.}
+
+\item{lsPrior}{List with \code{max}, \code{mh_sd}, \code{a}, and \code{b} for spatial length-scale prior and proposal controls.}
+
+\item{sigmaPrior}{List with \code{a} and \code{b} inverse-gamma prior parameters for GP scales.}
+
+\item{noisePrior}{List with \code{a}, \code{b}, and \code{mh_sd} for the GP noise-ratio prior and proposal.}
+
+\item{mh_sd_r}{Proposal standard deviation for the negative-binomial dispersion parameter.}
+
+\item{kern}{Kernel function accepting a distance matrix and length scale.}
+}
+\value{
+A list containing posterior MCMC draws for the count GP, fixed
+effects, and the negative-binomial dispersion parameter.
+}
 \description{
 Run the ZINB GP model with GP random effects only in the count part.
 }

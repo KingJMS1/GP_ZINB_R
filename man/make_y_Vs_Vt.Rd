@@ -10,11 +10,11 @@ make_y_Vs_Vt(obs_matrix)
 \item{obs_matrix}{s by t matrix, where s is the number of locations, t is the number of times, each entry of the matrix is a nonnegative integer.}
 }
 \value{
-A List of the following values:
-\itemize{
-\item {\strong{y:} } {Flattened version of the observation matrix, flattened in column-major order.}
-\item {\strong{Vs:} } {Spatial design matrix, indicates which elements in y correspond with which positions in space}
-\item {\strong{Vt:} } {Temporal design matrix, indicates which elements in y correspond with which positions in time}
+A list with the following elements:
+\describe{
+\item{y}{The observation matrix flattened in column-major order.}
+\item{Vs}{Spatial design matrix mapping observations to locations.}
+\item{Vt}{Temporal design matrix mapping observations to times.}
 }
 }
 \description{

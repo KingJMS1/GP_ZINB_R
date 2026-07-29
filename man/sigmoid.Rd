@@ -2,10 +2,17 @@
 % Please edit documentation in R/estimation.R
 \name{sigmoid}
 \alias{sigmoid}
-\title{sigmoid}
+\title{Numerically stable sigmoid function}
 \usage{
 sigmoid(eta)
 }
+\arguments{
+\item{eta}{Numeric vector or matrix of linear predictors.}
+}
+\value{
+\code{eta} transformed to probabilities in \verb{[1e-6, 1 - 1e-6]}.
+}
 \description{
-Compute sigmoid function, clip properly to prevent infinity/nan
+Computes the inverse-logit transformation while clipping its
+output away from zero and one.
 }

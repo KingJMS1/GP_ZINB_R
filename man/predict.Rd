@@ -2,10 +2,28 @@
 % Please edit documentation in R/estimation.R
 \name{predict}
 \alias{predict}
-\title{predict}
+\title{Predict at new locations and times}
 \usage{
 predict(X, Ds_new, Dt_new, Vs_new, Vt_new, output)
 }
+\arguments{
+\item{X}{Fixed-effect design matrix for the prediction observations.}
+
+\item{Ds_new}{Distances between new and observed spatial locations.}
+
+\item{Dt_new}{Distances between new and observed temporal locations.}
+
+\item{Vs_new}{Spatial random-effect design matrix for prediction observations.}
+
+\item{Vt_new}{Temporal random-effect design matrix for prediction observations.}
+
+\item{output}{Fitted model output containing posterior parameter draws.}
+}
+\value{
+A prediction object. This function is currently a placeholder and
+does not return calculated predictions.
+}
 \description{
-Predict at new locations/times, provides predictions along with estimated variance
+Predicts from fitted Gaussian-process model output at new
+spatial locations and times.
 }

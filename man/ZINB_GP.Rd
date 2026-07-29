@@ -29,70 +29,67 @@ ZINB_GP(
 )
 }
 \arguments{
-\item{X}{Other Predictor variables}
+\item{X}{Fixed-effect design matrix with one row per observation.}
 
-\item{y}{Zero inflated count response}
+\item{y}{Non-negative integer count response.}
 
-\item{coords}{Spatial coordinates for NNGP}
+\item{coords}{Spatial coordinates used by the legacy spNNGP implementation.}
 
-\item{nsim}{How long to run MCMC in total, must be greater than burn, defaults to 5000 iterations}
+\item{nsim}{Total number of MCMC iterations; must exceed \code{burn}.}
 
-\item{burn}{How long to run MCMC before saving samples, defaults to 1000 iterations}
+\item{burn}{Number of burn-in iterations.}
 
-\item{use_count_gp}{Whether or not to include GP random effects in the count model, defaults to true, recommended}
+\item{use_count_gp}{Whether to include GP random effects in the count component.}
 
-\item{use_inflation_gp}{Whether or not to include GP random effects in the zero-inflation portion of the model, defaults to false, not recommended}
+\item{use_inflation_gp}{Whether to include GP random effects in the zero-inflation component.}
 
-\item{thin}{How often to save MCMC samples, default is 1, saves every iteration. Increase this if running out of memory.}
+\item{thin}{Store every \code{thin}-th iteration after burn-in.}
 
-\item{kern}{Kernel function, takes a distance matrix and length scale, returns evaluated kernel. e.g. function(dist, ls) {return(exp(-dist / (ls^2)))}}
+\item{kern}{Kernel function accepting a distance matrix and length scale.}
 
-\item{save_ypred}{Whether or not to output the predicted values of the response, defaults to false}
+\item{save_ypred}{Whether to save posterior predictive draws.}
 
-\item{print_iter}{If print_progress is set, how often to print the iteration number of the MCMC chain, defaults to every 100 iterations.}
+\item{print_iter}{Print progress every \code{print_iter} iterations.}
 
-\item{print_progress}{Whether or not to print the iteration number of the MCMC chain, defaults to True}
+\item{print_progress}{Whether to print MCMC progress.}
 
-\item{Vs}{Spatially varying predictor variables (e.g. one-hot indication of which location this is for varying intercept), wrapped in sparseMatrix from Matrix R package. Will be multiplied by the spatial random effects for prediction.}
+\item{Vs}{Spatial random-effect design matrix with one row per observation.}
 
-\item{Vt}{Temporal varying predictor variables, wrapped in sparseMatrix from Matrix R package. Will be multiplied by the temporal random effects for prediction.}
+\item{Vt}{Temporal random-effect design matrix with one row per observation.}
 
-\item{Ds}{Spatial distance matrix, diagonal should be 0, off diagonal is distance between elements i and j in space, inputs to the spatial NNGP kernel}
+\item{Ds}{Spatial distance matrix; its diagonal must be zero.}
 
-\item{Dt}{Temporal distance matirx, diagonal should be 0, off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel}
+\item{Dt}{Temporal distance matrix; its diagonal must be zero.}
 
-\item{ltPrior}{Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.}
+\item{ltPrior}{List with \code{max}, \code{mh_sd}, \code{a}, and \code{b} for temporal length-scale prior and proposal controls.}
 
-\item{lsPrior}{Parameters for a gamma prior and MH update controls for spatial lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.}
+\item{lsPrior}{List with \code{max}, \code{mh_sd}, \code{a}, and \code{b} for spatial length-scale prior and proposal controls.}
 
-\item{sigmaPrior}{Parameters for inverse-gamma prior for sigma e.g. list(a=0.01, b=0.1)}
+\item{sigmaPrior}{List with \code{a} and \code{b} inverse-gamma prior parameters for GP scales.}
 
-\item{noisePrior}{Parameters for beta prior for kernel signal to noise ratio, along with MH proposal controls, e.g. list(a=1.5, b=1.5, mh_sd=0.2)}
+\item{noisePrior}{List with \code{a}, \code{b}, and \code{mh_sd} for the GP noise-ratio prior and proposal.}
 
-\item{mh_sd_r}{MH standard deviation for proposal distribution for r, change if r seems to be walking too slowly. Default is 0.4.}
+\item{mh_sd_r}{Proposal standard deviation for the negative-binomial dispersion parameter.}
 }
 \value{
-A List of the following sampled values:
-\itemize{
-\item {\strong{Alpha:} } {Model coefficients for logit model}
-\item {\strong{Beta:} } {Model coefficients for NB model}
-\item {\strong{A:} } {Portion of spatial random effect in the logit model explained by kernel}
-\item {\strong{B:} } {Portion of temporal random effect in the logit model explained by kernel}
-\item {\strong{C:} } {Portion of spatial random effect in the NB model explained by kernel}
-\item {\strong{D:} } {Portion of temporal random effect in the NB model explained by kernel}
-\item {\strong{L1t:} } {Length scale for temporal kernel in logit model, i.e. } \eqn{e^{-\frac{d^{2}}{2 l_{1t}^{2}}}}
-\item {\strong{Sigma1t:} } {Kernel scale parameter for above kernel, i.e. } \eqn{\sigma_{1t}^{2}e^{.}}
-\item {\strong{L2t:} } {Length scale for temporal kernel in NB model, i.e. } \eqn{e^{-\frac{d^{2}}{2 l_{1t}^{2}}}}
-\item {\strong{Sigma2t:} } {Kernel scale parameter for above kernel, i.e. } \eqn{\sigma_{2t}^{2}e^{.}}
-\item {\strong{Phi_bin:} } {Length scale for spatial kernel in logit model, i.e. } \eqn{e^{-\Phi_{bin}d^{2}}}
-\item {\strong{Sigma1s:} } {Square root of multiplier for spatial kernel in logit model}
-\item {\strong{Phi_nb:} } {Length scale for spatial kernel in NB model, i.e. } \eqn{e^{-\Phi_{nb}d^{2}}}
-\item {\strong{Sigma2s:} } {Square root of multiplier for spatial kernel in NB model}
-\item {\strong{R:} } {Dispersion parameter for Negative Binomial distribution.}
-\item {\strong{at_risk:} } {At risk indicator for each observation}
-\item {\strong{Y_pred:} } {Predictions, sampled from the posterior distribution at each iteration, NULL if save_ypred is false}
+A list containing posterior MCMC draws:
+\describe{
+\item{Alpha}{Fixed-effect coefficients for the zero-inflation component.}
+\item{Beta}{Fixed-effect coefficients for the count component.}
+\item{A, B}{Spatial and temporal random effects for the zero-inflation component.}
+\item{C, D}{Spatial and temporal random effects for the count component.}
+\item{L1t, L2t}{Temporal GP length scales for the zero-inflation and count components.}
+\item{Sigma1t, Sigma2t}{Temporal GP scale parameters.}
+\item{Phi_bin, Phi_nb}{Spatial GP length-scale parameters.}
+\item{Sigma1s, Sigma2s}{Spatial GP scale parameters.}
+\item{R}{Negative-binomial dispersion parameter.}
+\item{at_risk}{At-risk indicator draws for each observation.}
+\item{Y_pred}{Posterior predictive draws, or \code{NULL} when \code{save_ypred} is \code{FALSE}.}
 }
 }
 \description{
-Run the ZINB NNGP model described in https://doi.org/10.1016/j.jspi.2023.106098.
+Fits the zero-inflated negative-binomial Gaussian-process model
+described in \url{https://doi.org/10.1016/j.jspi.2023.106098}. The supplied
+spatial and temporal design and distance matrices determine which Gaussian
+processes are included.
 }

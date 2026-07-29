@@ -42,13 +42,14 @@ nullcheck <- function(value, default) {
 #' @param lsPrior prior information for length scale, needs mh_sd, max, a, b
 #' @param sigmaPrior prior information for sigma, needs a, b
 #' @param noisePrior prior information for noise_ratio, needs mh_sd, a, b
-#' #' @return A List of the following sampled values:          
-#' \itemize{
-#'      \item {\strong{ls:} } {Length scale}
-#'      \item {\strong{sigma:} } {sigma}
-#'      \item {\strong{noise_ratio:} } {noise ratio}
-#'      \item {\strong{K:} } {Kernel matrix}
-#'      \item {\strong{K_inv:} } {Inverse of kernel matrix}
+#' @param kern Kernel function accepting a distance matrix and a length scale.
+#' @return A list with the following elements:
+#' \describe{
+#'   \item{ls}{Updated length scale.}
+#'   \item{sigma}{Updated GP scale.}
+#'   \item{noise_ratio}{Updated kernel-to-noise mixing ratio.}
+#'   \item{K}{Updated kernel matrix.}
+#'   \item{K_inv}{Inverse of the updated kernel matrix.}
 #' }
 #' @importFrom stats dgamma
 #' @importFrom stats dbeta
@@ -127,47 +128,31 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 }
 
 #' ZINB_GP_orig
-#' @description Run the ZINB NNGP model described in https://doi.org/10.1016/j.jspi.2023.106098.
+#' @description Fits the legacy spatial-temporal zero-inflated negative-binomial
+#' Gaussian-process model described in <https://doi.org/10.1016/j.jspi.2023.106098>.
 #'
-#' @param X Other Predictor variables
-#' @param y Zero inflated count response
-#' @param coords Spatial coordinates for NNGP
-#' @param Vs   Spatially varying predictor variables (e.g. one-hot indication of which location this is for varying intercept), wrapped in sparseMatrix from Matrix R package. Will be multiplied by the spatial random effects for prediction.
-#' @param Vt   Temporal varying predictor variables, wrapped in sparseMatrix from Matrix R package. Will be multiplied by the temporal random effects for prediction.
-#' @param Ds   Spatial distance matrix, diagonal should be 0, off diagonal is distance between elements i and j in space, inputs to the spatial NNGP kernel
-#' @param Dt   Temporal distance matirx, diagonal should be 0, off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel
-#' @param nsim How long to run MCMC in total, must be greater than burn.
-#' @param burn How long to run MCMC before saving samples.
-#' @param thin How often to save MCMC samples, default is 1, saves every iteration. Increase this if running out of memory.
-#' @param save_ypred Whether or not to output the predicted values at every iteration
-#' @param print_iter How often to print the iteration number of the MCMC chain.
-#' @param print_progress Whether or not to print the iteration number of the MCMC chain.
-#' @param ltPrior Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.
-#' @param lsPrior Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.
-#' @param sigmaPrior Parameters for inverse-gamma prior for sigma e.g. list(a=0.01, b=0.1)
-#' @param noisePrior Parameters for beta prior for kernel signal to noise ratio, along with MH proposal controls, e.g. list(a=1.5, b=1.5, mh_sd=0.2)
-#' @param mh_sd_r MH standard deviation for proposal distribution for r, change if r seems to be walking too slowly. Default is 0.4.
-#' @param kern Kernel function, takes a distance matrix and length scale, returns evaluated kernel. e.g. function(dist, ls) {return(exp(-dist / (ls^2)))}
-#' @return A List of the following sampled values:          
-#' \itemize{
-#'      \item {\strong{Alpha:} } {Model coefficients for logit model}
-#'      \item {\strong{Beta:} } {Model coefficients for NB model}
-#'      \item {\strong{A:} } {Portion of spatial random effect in the logit model explained by kernel}
-#'      \item {\strong{B:} } {Portion of temporal random effect in the logit model explained by kernel}
-#'      \item {\strong{C:} } {Portion of spatial random effect in the NB model explained by kernel}
-#'      \item {\strong{D:} } {Portion of temporal random effect in the NB model explained by kernel}
-#'      \item {\strong{L1t:} } {Length scale for temporal kernel in logit model, i.e. } \eqn{e^{-\frac{d^{2}}{2 l_{1t}^{2}}}} 
-#'      \item {\strong{Sigma1t:} } {Kernel scale parameter for above kernel, i.e. } \eqn{\sigma_{1t}^{2}e^{.}}
-#'      \item {\strong{L2t:} } {Length scale for temporal kernel in NB model, i.e. } \eqn{e^{-\frac{d^{2}}{2 l_{1t}^{2}}}}
-#'      \item {\strong{Sigma2t:} } {Kernel scale parameter for above kernel, i.e. } \eqn{\sigma_{2t}^{2}e^{.}}
-#'      \item {\strong{Phi_bin:} } {Length scale for spatial kernel in logit model, i.e. } \eqn{e^{-\Phi_{bin}d^{2}}}
-#'      \item {\strong{Sigma1s:} } {Square root of multiplier for spatial kernel in logit model}
-#'      \item {\strong{Phi_nb:} } {Length scale for spatial kernel in NB model, i.e. } \eqn{e^{-\Phi_{nb}d^{2}}}
-#'      \item {\strong{Sigma2s:} } {Square root of multiplier for spatial kernel in NB model}
-#'      \item {\strong{R:} } {Dispersion parameter for Negative Binomial distribution.}
-#'      \item {\strong{at_risk:} } {At risk indicator for each observation}
-#'      \item {\strong{Y_pred:} } {Predictions, sampled from the posterior distribution at each iteration, NULL if save_ypred is false}
-#' }
+#' @param X Fixed-effect design matrix with one row per observation.
+#' @param y Non-negative integer count response.
+#' @param coords Spatial coordinates for the NNGP approximation.
+#' @param Vs Spatial random-effect design matrix with one row per observation.
+#' @param Vt Temporal random-effect design matrix with one row per observation.
+#' @param Ds Spatial distance matrix; its diagonal must be zero.
+#' @param Dt Temporal distance matrix; its diagonal must be zero.
+#' @param nsim Total number of MCMC iterations; must exceed `burn`.
+#' @param burn Number of burn-in iterations.
+#' @param thin Store every `thin`-th iteration after burn-in.
+#' @param save_ypred Whether to save posterior predictive draws.
+#' @param print_iter Print progress every `print_iter` iterations.
+#' @param print_progress Whether to print MCMC progress.
+#' @param ltPrior List with `max`, `mh_sd`, `a`, and `b` for temporal length-scale prior and proposal controls.
+#' @param lsPrior List with `max`, `mh_sd`, `a`, and `b` for spatial length-scale prior and proposal controls.
+#' @param sigmaPrior List with `a` and `b` inverse-gamma prior parameters for GP scales.
+#' @param noisePrior List with `a`, `b`, and `mh_sd` for the GP noise-ratio prior and proposal.
+#' @param mh_sd_r Proposal standard deviation for the negative-binomial dispersion parameter.
+#' @param kern Kernel function accepting a distance matrix and length scale.
+#' @return A list containing posterior MCMC draws, including fixed-effect
+#'   coefficients, spatial and temporal random effects, their GP parameters,
+#'   the negative-binomial dispersion parameter, and optional predictive draws.
 #' @export
 #' @importFrom MASS glm.nb
 #' @importFrom mvtnorm rmvnorm
@@ -447,6 +432,9 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
 
 #' ZINB_GP_inflation
 #' @description Run the ZINB GP model with GP random effects only in the inflation component
+#' @inheritParams ZINB_GP_orig
+#' @return A list containing posterior MCMC draws for the zero-inflation GP,
+#'   fixed effects, and the negative-binomial dispersion parameter.
 #' @importFrom MASS glm.nb
 #' @importFrom mvtnorm rmvnorm
 #' @importFrom BayesLogit rpg
@@ -686,6 +674,9 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
 
 #' ZINB_GP_count
 #' @description Run the ZINB GP model with GP random effects only in the count part.
+#' @inheritParams ZINB_GP_orig
+#' @return A list containing posterior MCMC draws for the count GP, fixed
+#'   effects, and the negative-binomial dispersion parameter.
 #' @importFrom MASS glm.nb
 #' @importFrom mvtnorm rmvnorm
 #' @importFrom BayesLogit rpg

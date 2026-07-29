@@ -2,10 +2,31 @@
 % Please edit documentation in R/estimation.R
 \name{estimate_nocd}
 \alias{estimate_nocd}
-\title{estimate}
+\title{Draw posterior predictions without count random effects}
 \usage{
 estimate_nocd(X, alpha, beta, Vs, Vt, a, b, r)
 }
+\arguments{
+\item{X}{Fixed-effect design matrix.}
+
+\item{alpha}{Fixed-effect coefficients for the zero-inflation component.}
+
+\item{beta}{Fixed-effect coefficients for the count component.}
+
+\item{Vs}{Spatial random-effect design matrix.}
+
+\item{Vt}{Temporal random-effect design matrix.}
+
+\item{a}{Spatial random-effect draw for the zero-inflation component.}
+
+\item{b}{Temporal random-effect draw for the zero-inflation component.}
+
+\item{r}{Negative-binomial dispersion parameter.}
+}
+\value{
+A vector of posterior predictive count draws.
+}
 \description{
-Draw y from posterior distribution
+Draw a zero-inflated negative-binomial response conditional on
+fixed effects and zero-inflation-component spatial and temporal random effects.
 }

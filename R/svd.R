@@ -4,8 +4,9 @@
 #' @description Use SVD to solve a linear system Ax=b
 #' 
 #' @param A_svd SVD of A
-#' @param b b
-#' @return x
+#' @param b Right-hand-side vector or matrix.
+#' @param threshold Singular values at or below this threshold are discarded.
+#' @return The SVD-based solution to `A %*% x = b`.
 solve_svd <- function(A_svd, b, threshold = 1e-12) {
     # Get parts that have nonzero eigenvalues
     rank <- sum(A_svd$d > threshold)
@@ -24,6 +25,9 @@ solve_svd <- function(A_svd, b, threshold = 1e-12) {
 #' @param P_svd SVD of precision matrix
 #' @param mu Mean of MVN to draw from
 #' @param entropy Draw from MVN of correct size (can be used to draw all mvns at once for efficiency)
+#' @param threshold Singular values at or below this threshold are discarded.
+#' @return A draw from the multivariate normal distribution with precision
+#'   matrix represented by `P_svd`.
 mvn_sample_svd <- function(P_svd, mu, entropy = NULL, threshold = 1e-12) {
     if (is.null(entropy)) {
         entropy <- as.matrix(rnorm(length(mu)))
