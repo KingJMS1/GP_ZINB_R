@@ -1,3 +1,33 @@
+#' Draw a Zero-Inflated Negative-Binomial Response
+#'
+#' Generates one posterior predictive count for each pair of at-risk and count
+#' linear predictors using the parameterization fitted by `ZINB_GP()`.
+#'
+#' @param eta_at_risk Numeric vector of linear predictors for the Bernoulli
+#'   at-risk component.
+#' @param eta_count Numeric vector of linear predictors for the
+#'   negative-binomial count component.
+#' @param r Positive negative-binomial dispersion parameter.
+#'
+#' @return A non-negative integer vector with one predictive count per linear
+#'   predictor pair.
+#' @keywords internal
+draw_zinb_response <- function(eta_at_risk, eta_count, r) {
+    N <- length(eta_at_risk)
+    at_risk <- stats::rbinom(N, 1, sigmoid(eta_at_risk))
+    y <- integer(N)
+
+    if (any(at_risk == 1)) {
+        y[at_risk == 1] <- stats::rnbinom(
+            sum(at_risk == 1),
+            size = r,
+            prob = sigmoid(-eta_count[at_risk == 1])
+        )
+    }
+
+    y
+}
+
 #' @title Draw from the full posterior predictive distribution
 #' @description Draw a zero-inflated negative-binomial response conditional on
 #' sampled fixed effects and spatial and temporal random effects.
@@ -120,6 +150,6 @@ sigmoid <- function(eta) {
 predict <- function(X, Ds_new, Dt_new, Vs_new, Vt_new, output) {
     l1t <- output$L1t
     l2t <- output$L2t
-    phi_bin <- output$Phi_bin
-    phi_nb <- output$Phi_nb
+    phi_bin <- output$L1s
+    phi_nb <- output$L2s
 }

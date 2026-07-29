@@ -30,6 +30,168 @@ nullcheck <- function(value, default) {
     return(value)
 }
 
+#' Validate ZINB Model Inputs
+#'
+#' Checks the fixed-effect design, count response, and MCMC controls shared by
+#' the branch-specific ZINB-GP samplers.
+#'
+#' @param X Fixed-effect design matrix with one row per observation.
+#' @param y Non-negative integer count response with one value per row of `X`.
+#' @param nsim Positive integer giving the total number of MCMC iterations.
+#' @param burn Non-negative integer giving the number of burn-in iterations.
+#' @param thin Positive integer giving the post-burn-in thinning interval.
+#'
+#' @return `TRUE`, invisibly, when all inputs are valid. Otherwise, the function
+#'   stops with an input-specific error message.
+#' @keywords internal
+validate_zinb_inputs <- function(X, y, nsim, burn, thin) {
+    if (length(dim(X)) != 2L || nrow(X) < 1L || ncol(X) < 1L) {
+        stop("X must be a non-empty two-dimensional design matrix.")
+    }
+    if (length(y) != nrow(X)) {
+        stop("y must have the same number of entries as rows in X.")
+    }
+    if (any(!is.finite(X))) {
+        stop("X must contain only finite values.")
+    }
+    if (any(!is.finite(y)) || any(y < 0) || any(y != floor(y))) {
+        stop("y must contain only finite, non-negative integer counts.")
+    }
+    if (!any(y > 0)) {
+        stop("At least one positive count is required to initialize glm.nb.")
+    }
+
+    is_whole_number <- function(value) {
+        length(value) == 1L &&
+            is.finite(value) &&
+            value == floor(value)
+    }
+    if (!is_whole_number(nsim) || nsim < 1L) {
+        stop("nsim must be a positive integer.")
+    }
+    if (!is_whole_number(burn) || burn < 0L) {
+        stop("burn must be a non-negative integer.")
+    }
+    if (!is_whole_number(thin) || thin < 1L) {
+        stop("thin must be a positive integer.")
+    }
+    if (nsim <= burn) {
+        stop("nsim must be greater than burn.")
+    }
+    if ((nsim - burn) %% thin != 0) {
+        stop("(nsim - burn) must be divisible by thin.")
+    }
+
+    invisible(TRUE)
+}
+
+#' Validate a GP Design and Distance Matrix
+#'
+#' Checks that a baseline-coded GP design is aligned with the observations and
+#' that its distance matrix contains one additional row and column for the
+#' omitted baseline level.
+#'
+#' @param V GP design matrix with one row per observation and one column per
+#'   nonbaseline GP level.
+#' @param D Pairwise distance matrix for all GP levels, including the baseline.
+#' @param n_observations Expected number of rows in `V`.
+#' @param design_name Character label used to identify `V` in error messages.
+#' @param distance_name Character label used to identify `D` in error messages.
+#'
+#' @return `TRUE`, invisibly, when the design and distance matrix are valid.
+#'   Otherwise, the function stops with an input-specific error message.
+#' @keywords internal
+validate_gp_design <- function(V, D, n_observations, design_name, distance_name) {
+    if (length(dim(V)) != 2L || nrow(V) != n_observations) {
+        stop(design_name, " must have the same number of rows as X.")
+    }
+    if (ncol(V) < 1L) {
+        stop(design_name, " must contain at least one nonbaseline GP level.")
+    }
+    if (any(!is.finite(V))) {
+        stop(design_name, " must contain only finite values.")
+    }
+
+    D <- as.matrix(D)
+    expected_dimension <- ncol(V) + 1L
+    if (length(dim(D)) != 2L ||
+        nrow(D) != expected_dimension ||
+        ncol(D) != expected_dimension) {
+        stop(
+            distance_name,
+            " must be a square matrix with ncol(",
+            design_name,
+            ") + 1 rows and columns, including the baseline level."
+        )
+    }
+    if (any(!is.finite(D)) || any(D < 0)) {
+        stop(distance_name, " must contain finite, non-negative distances.")
+    }
+    if (any(abs(diag(D)) > sqrt(.Machine$double.eps))) {
+        stop("The diagonal of ", distance_name, " must be zero.")
+    }
+    if (!isTRUE(all.equal(D, t(D), tolerance = sqrt(.Machine$double.eps)))) {
+        stop(distance_name, " must be symmetric.")
+    }
+
+    invisible(TRUE)
+}
+
+#' Validate Spatial Coordinate Alignment
+#'
+#' Confirms that the full coordinate matrix, the baseline-coded spatial design,
+#' and the spatial distance matrix describe the same number of spatial levels.
+#'
+#' @param coords Spatial coordinate matrix with one row per full spatial level,
+#'   including the baseline level.
+#' @param Vs Spatial GP design matrix with the baseline column omitted.
+#' @param Ds Spatial distance matrix with one row and column per row of `coords`.
+#'
+#' @return `TRUE`, invisibly, when the spatial inputs are aligned. Otherwise,
+#'   the function stops with an input-specific error message.
+#' @keywords internal
+validate_spatial_coordinates <- function(coords, Vs, Ds) {
+    if (length(dim(coords)) != 2L || any(!is.finite(coords))) {
+        stop("coords must be a finite two-dimensional coordinate matrix.")
+    }
+
+    expected_levels <- ncol(Vs) + 1L
+    if (nrow(coords) != expected_levels) {
+        stop(
+            "nrow(coords) must equal ncol(Vs) + 1. ",
+            "Vs must be generated from the supplied coordinates with its ",
+            "baseline coordinate column omitted."
+        )
+    }
+    if (nrow(Ds) != nrow(coords) || ncol(Ds) != nrow(coords)) {
+        stop(
+            "Ds must have one row and column for every row of coords, ",
+            "including the baseline coordinate."
+        )
+    }
+
+    invisible(TRUE)
+}
+
+#' Conditional At-Risk Probability for an Observed Zero
+#'
+#' Computes the conditional probability that an observation belongs to the
+#' negative-binomial, or at-risk, component given that its observed count is
+#' zero. The calculation is performed on the log-odds scale for numerical
+#' stability.
+#'
+#' @param pi Prior at-risk probabilities.
+#' @param q Negative-binomial zero-probability bases, equal to
+#'   `1 - sigmoid(eta_count)`.
+#' @param r Positive negative-binomial dispersion parameter.
+#'
+#' @return A numeric vector or matrix with the same shape as `pi` and `q`,
+#'   containing probabilities between zero and one.
+#' @keywords internal
+zero_at_risk_probability <- function(pi, q, r) {
+    stats::plogis(stats::qlogis(pi) + r * log(q))
+}
+
 #' update_ls_sigma_noise
 #' @description Update kernel parameters for a GP
 #' 
@@ -129,11 +291,12 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 
 #' ZINB_GP_orig
 #' @description Fits the spatial-temporal zero-inflated negative-binomial
-#' Gaussian-process model described in <https://doi.org/10.1016/j.jspi.2023.106098>.
+#' Gaussian-process model described in \doi{10.1016/j.jspi.2023.106098}.
 #'
 #' @param X Fixed-effect design matrix with one row per observation.
 #' @param y Non-negative integer count response.
-#' @param coords Spatial coordinates for the NNGP approximation.
+#' @param coords Spatial coordinate matrix with one row per full spatial level,
+#'   including the baseline level omitted from `Vs`.
 #' @param Vs Spatial random-effect design matrix with one row per observation.
 #' @param Vt Temporal random-effect design matrix with one row per observation.
 #' @param Ds Spatial distance matrix; its diagonal must be zero.
@@ -169,6 +332,11 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 #' @importFrom stats runif
 #' @importFrom Matrix forceSymmetric
 ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE, ltPrior = NULL, lsPrior = NULL, sigmaPrior = NULL, noisePrior = NULL, mh_sd_r = NULL, kern = NULL) {
+    validate_zinb_inputs(X, y, nsim, burn, thin)
+    validate_gp_design(Vs, Ds, nrow(X), "Vs", "Ds")
+    validate_gp_design(Vt, Dt, nrow(X), "Vt", "Dt")
+    validate_spatial_coordinates(coords, Vs, Ds)
+
     # X is the design matrix with dimension N*p
     # x is the vector with length N
     # y is the count response with length N
@@ -196,7 +364,7 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
     ##########
 
     ####### priors for alpha and beta ######
-    T0a <- T0b <- diag(100, p)
+    T0a <- T0b <- diag(0.01, p)
     sd_r <- nullcheck(mh_sd_r, 0.4)
     
     ####### kernel hyperparameters  ######
@@ -231,8 +399,8 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
     eta2 <- X %*% beta + 0 # Use all n observations
     p_at_risk <- sigmoid(eta1) # at-risk probability
 
-    q <- 1 / (1 + exp(eta2))
-    theta <- p_at_risk * (q^r) / (p_at_risk * (q^r) + 1 - p_at_risk) # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
+    q <- sigmoid(-eta2)
+    theta <- zero_at_risk_probability(p_at_risk, q, r)
     y1[y == 0] <- rbinom(sum(y == 0), 1, theta[y == 0]) # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
 
     m1 <- glm(y1 ~ 0 + X, family = "binomial")
@@ -323,8 +491,8 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
         eta1 <- X %*% alpha + Vs %*% a + Vt %*% b
         eta2 <- X %*% beta + Vs %*% c + Vt %*% d # Use all n observations
         pi <- sigmoid(eta1) # at-risk probability
-        q <- 1 / (1 + exp(eta2)) # Pr(y=0|y1=1)
-        theta <- pi * (q^r) / (pi * (q^r) + 1 - pi) # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
+        q <- sigmoid(-eta2) # Pr(y=0|y1=1)
+        theta <- zero_at_risk_probability(pi, q, r)
         y1[y == 0] <- rbinom(sum(y == 0), 1, theta[y == 0]) # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
         N1 <- sum(y1)
 
@@ -383,7 +551,7 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
         Ks_nb_inv <- out$K_inv
 
         # Store
-        if ((i > burn) && (i %% thin == 0)) {
+        if ((i > burn) && ((i - burn) %% thin == 0)) {
             j <- (i - burn) / thin
             
             Alpha[j, ] <- alpha
@@ -454,6 +622,11 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
 #' @importFrom stats runif
 #' @importFrom Matrix forceSymmetric
 ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE, ltPrior = NULL, lsPrior = NULL, sigmaPrior = NULL, noisePrior = NULL, mh_sd_r = NULL, kern = NULL) {
+    validate_zinb_inputs(X, y, nsim, burn, thin)
+    validate_gp_design(Vs, Ds, nrow(X), "Vs", "Ds")
+    validate_gp_design(Vt, Dt, nrow(X), "Vt", "Dt")
+    validate_spatial_coordinates(coords, Vs, Ds)
+
     # X is the design matrix with dimension N*p
     # x is the vector with length N
     # y is the count response with length N
@@ -481,7 +654,7 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
     ##########
 
     ####### priors for alpha and beta ######
-    T0a <- T0b <- diag(100, p)
+    T0a <- T0b <- diag(0.01, p)
     sd_r <- nullcheck(mh_sd_r, 0.4)
     
     ####### kernel hyperparameters  ######
@@ -516,8 +689,8 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
     eta2 <- X %*% beta + 0 # Use all n observations
     p_at_risk <- sigmoid(eta1) # at-risk probability
 
-    q <- 1 / (1 + exp(eta2))
-    theta <- p_at_risk * (q^r) / (p_at_risk * (q^r) + 1 - p_at_risk) # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
+    q <- sigmoid(-eta2)
+    theta <- zero_at_risk_probability(p_at_risk, q, r)
     y1[y == 0] <- rbinom(sum(y == 0), 1, theta[y == 0]) # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
 
     m1 <- glm(y1 ~ 0 + X, family = "binomial")
@@ -596,8 +769,8 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
         eta1 <- X %*% alpha + Vs %*% a + Vt %*% b
         eta2 <- X %*% beta # Use all n observations
         pi <- sigmoid(eta1) # at-risk probability
-        q <- 1 / (1 + exp(eta2)) # Pr(y=0|y1=1)
-        theta <- pi * (q^r) / (pi * (q^r) + 1 - pi) # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
+        q <- sigmoid(-eta2) # Pr(y=0|y1=1)
+        theta <- zero_at_risk_probability(pi, q, r)
         y1[y == 0] <- rbinom(sum(y == 0), 1, theta[y == 0]) # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
         N1 <- sum(y1)
 
@@ -630,15 +803,19 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
         eta <- X[y1 == 1, ] %*% beta
         w <- rpg(N1, y[y1 == 1] + r, eta) # Polya weights
         z <- (y[y1 == 1] - r) / (2 * w)
+        X_nb <- X[y1 == 1, , drop = FALSE]
 
-        # Update beta, c, d
-        svd_vinv <- svd(crossprod(sqrt(w) * X) + T0_nb)
-        m <- solve_svd(svd_vinv, (t(sqrt(w) * X) %*% (sqrt(w) * z)))
+        # Update beta
+        svd_vinv <- svd(crossprod(sqrt(w) * X_nb) + T0_nb)
+        m <- solve_svd(
+            svd_vinv,
+            t(sqrt(w) * X_nb) %*% (sqrt(w) * z)
+        )
         betacd <- c(mvn_sample_svd(svd_vinv, m))
         beta <- betacd
         
         # Store
-        if ((i > burn) && (i %% thin == 0)) {
+        if ((i > burn) && ((i - burn) %% thin == 0)) {
             j <- (i - burn) / thin
             
             Alpha[j, ] <- alpha
@@ -700,6 +877,11 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
 #' @importFrom stats runif
 #' @importFrom Matrix forceSymmetric
 ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, save_ypred = FALSE, print_iter = 100, print_progress = FALSE, ltPrior = NULL, lsPrior = NULL, sigmaPrior = NULL, noisePrior = NULL, mh_sd_r = NULL, kern = NULL) {
+    validate_zinb_inputs(X, y, nsim, burn, thin)
+    validate_gp_design(Vs, Ds, nrow(X), "Vs", "Ds")
+    validate_gp_design(Vt, Dt, nrow(X), "Vt", "Dt")
+    validate_spatial_coordinates(coords, Vs, Ds)
+
     # X is the design matrix with dimension N*p
     # x is the vector with length N
     # y is the count response with length N
@@ -727,7 +909,7 @@ ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sa
     ##########
 
     ####### priors for alpha and beta ######
-    T0a <- T0b <- diag(100, p)
+    T0a <- T0b <- diag(0.01, p)
     sd_r <- nullcheck(mh_sd_r, 0.4)
     
     ####### kernel hyperparameters  ######
@@ -762,8 +944,8 @@ ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sa
     eta2 <- X %*% beta + 0 # Use all n observations
     p_at_risk <- sigmoid(eta1) # at-risk probability
 
-    q <- 1 / (1 + exp(eta2))
-    theta <- p_at_risk * (q^r) / (p_at_risk * (q^r) + 1 - p_at_risk) # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
+    q <- sigmoid(-eta2)
+    theta <- zero_at_risk_probability(p_at_risk, q, r)
     y1[y == 0] <- rbinom(sum(y == 0), 1, theta[y == 0]) # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
 
     m1 <- glm(y1 ~ 0 + X, family = "binomial")
@@ -840,8 +1022,8 @@ ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sa
         eta1 <- X %*% alpha
         eta2 <- X %*% beta + Vs %*% c + Vt %*% d # Use all n observations
         pi <- sigmoid(eta1) # at-risk probability
-        q <- 1 / (1 + exp(eta2)) # Pr(y=0|y1=1)
-        theta <- pi * (q^r) / (pi * (q^r) + 1 - pi) # Conditional prob that y1=1 given y=0 -- i.e. Pr(chance zero|observed zero)
+        q <- sigmoid(-eta2) # Pr(y=0|y1=1)
+        theta <- zero_at_risk_probability(pi, q, r)
         y1[y == 0] <- rbinom(sum(y == 0), 1, theta[y == 0]) # If y=0, then draw a "chance zero" w.p. theta, otherwise y1=1
         N1 <- sum(y1)
 
@@ -884,7 +1066,7 @@ ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sa
         Ks_nb_inv <- out$K_inv
 
         # Store
-        if ((i > burn) && (i %% thin == 0)) {
+        if ((i > burn) && ((i - burn) %% thin == 0)) {
             j <- (i - burn) / thin
             
             Alpha[j, ] <- alpha
@@ -933,12 +1115,13 @@ ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sa
 #' @param y Non-negative integer count response of length N.
 #' @param Vs Sparse or dense spatial random-effect design matrix. It should
 #'   have N rows and one column per spatial location.
-#' @param Ds Spatial distance matrix, with one row and column per spatial
-#'   random effect. Diagonal entries must be zero.
+#' @param Ds Spatial distance matrix with one row and column per full spatial
+#'   level, including the baseline level omitted from `Vs`. Diagonal entries
+#'   must be zero.
 #' @param nsim Total number of MCMC iterations.
 #' @param burn Number of burn-in iterations.
 #' @param thin Store every thin-th iteration after burn-in.
-#' @param save_ypred Whether to save posterior fitted means and at-risk draws.
+#' @param save_ypred Whether to save posterior predictive counts and at-risk draws.
 #' @param print_iter Print progress every print_iter iterations.
 #' @param print_progress Whether to print MCMC progress.
 #' @param lsPrior Prior and proposal controls for spatial GP length scales.
@@ -981,6 +1164,9 @@ ZINB_GP_spatial <- function(
     mh_sd_r = NULL,
     kern = NULL
 ) {
+    validate_zinb_inputs(X, y, nsim, burn, thin)
+    validate_gp_design(Vs, Ds, nrow(X), "Vs", "Ds")
+
     if (length(y) != nrow(X)) {
         stop("y must have the same number of entries as rows in X.")
     }
@@ -1039,8 +1225,8 @@ ZINB_GP_spatial <- function(
     sd_r <- nullcheck(mh_sd_r, 0.4)
 
     # Fixed-effect prior precisions.
-    T0a <- diag(100, p)
-    T0b <- diag(100, p)
+    T0a <- diag(0.01, p)
+    T0b <- diag(0.01, p)
 
     # Initial latent at-risk indicator.
     y_ind <- as.integer(y != 0)
@@ -1055,14 +1241,14 @@ ZINB_GP_spatial <- function(
     eta2 <- as.numeric(X %*% beta)
 
     p_at_risk <- sigmoid(eta1)
-    q <- 1 / (1 + exp(eta2))
+    q <- sigmoid(-eta2)
 
     r <- 1
 
     y1 <- rep(0, N)
     y1[y > 0] <- 1
 
-    theta <- p_at_risk * q^r / (p_at_risk * q^r + 1 - p_at_risk)
+    theta <- zero_at_risk_probability(p_at_risk, q, r)
 
     y1[y == 0] <- stats::rbinom(
         sum(y == 0),
@@ -1148,9 +1334,9 @@ ZINB_GP_spatial <- function(
         eta2 <- as.numeric(X %*% beta + Vs %*% c)
 
         pi <- sigmoid(eta1)
-        q <- 1 / (1 + exp(eta2))
+        q <- sigmoid(-eta2)
 
-        theta <- pi * q^r / (pi * q^r + 1 - pi)
+        theta <- zero_at_risk_probability(pi, q, r)
 
         y1[y == 0] <- stats::rbinom(
             sum(y == 0),
@@ -1280,7 +1466,7 @@ ZINB_GP_spatial <- function(
         # ---------------------------------------------------------------
         # Store posterior draw.
         # ---------------------------------------------------------------
-        if (i > burn && i %% thin == 0) {
+        if (i > burn && (i - burn) %% thin == 0) {
             j <- (i - burn) / thin
 
             Alpha[j, ] <- alpha
@@ -1302,15 +1488,7 @@ ZINB_GP_spatial <- function(
             if (save_ypred) {
                 eta1 <- as.numeric(X %*% alpha + Vs %*% a)
                 eta2 <- as.numeric(X %*% beta + Vs %*% c)
-
-                pi <- sigmoid(eta1)
-
-                # NB mean conditional on being at risk:
-                # r * (1 - q) / q = r * exp(eta2).
-                mu_nb <- r * exp(eta2)
-
-                # Marginal ZINB expected count.
-                Y_pred[j, ] <- pi * mu_nb
+                Y_pred[j, ] <- draw_zinb_response(eta1, eta2, r)
                 at_risk[j, ] <- y1
             }
         }
@@ -1352,12 +1530,13 @@ ZINB_GP_spatial <- function(
 #' @param y Non-negative integer count response of length N.
 #' @param Vs Sparse or dense spatial random-effect design matrix. It should
 #'   have N rows and one column per spatial location.
-#' @param Ds Spatial distance matrix, with one row and column per spatial
-#'   random effect. Diagonal entries must be zero.
+#' @param Ds Spatial distance matrix with one row and column per full spatial
+#'   level, including the baseline level omitted from `Vs`. Diagonal entries
+#'   must be zero.
 #' @param nsim Total number of MCMC iterations.
 #' @param burn Number of burn-in iterations.
 #' @param thin Store every thin-th iteration after burn-in.
-#' @param save_ypred Whether to save posterior fitted means and at-risk draws.
+#' @param save_ypred Whether to save posterior predictive counts and at-risk draws.
 #' @param print_iter Print progress every print_iter iterations.
 #' @param print_progress Whether to print MCMC progress.
 #' @param lsPrior Prior and proposal controls for spatial GP length scales.
@@ -1400,6 +1579,9 @@ ZINB_GP_spatial_count <- function(
     mh_sd_r = NULL,
     kern = NULL
 ) {
+    validate_zinb_inputs(X, y, nsim, burn, thin)
+    validate_gp_design(Vs, Ds, nrow(X), "Vs", "Ds")
+
     if (length(y) != nrow(X)) {
         stop("y must have the same number of entries as rows in X.")
     }
@@ -1458,8 +1640,8 @@ ZINB_GP_spatial_count <- function(
     sd_r <- nullcheck(mh_sd_r, 0.4)
 
     # Fixed-effect prior precisions.
-    T0a <- diag(100, p)
-    T0b <- diag(100, p)
+    T0a <- diag(0.01, p)
+    T0b <- diag(0.01, p)
 
     # Initial latent at-risk indicator.
     y_ind <- as.integer(y != 0)
@@ -1474,14 +1656,14 @@ ZINB_GP_spatial_count <- function(
     eta2 <- as.numeric(X %*% beta)
 
     p_at_risk <- sigmoid(eta1)
-    q <- 1 / (1 + exp(eta2))
+    q <- sigmoid(-eta2)
 
     r <- 1
 
     y1 <- rep(0, N)
     y1[y > 0] <- 1
 
-    theta <- p_at_risk * q^r / (p_at_risk * q^r + 1 - p_at_risk)
+    theta <- zero_at_risk_probability(p_at_risk, q, r)
 
     y1[y == 0] <- stats::rbinom(
         sum(y == 0),
@@ -1548,9 +1730,9 @@ ZINB_GP_spatial_count <- function(
         eta2 <- as.numeric(X %*% beta + Vs %*% c)
 
         pi <- sigmoid(eta1)
-        q <- 1 / (1 + exp(eta2))
+        q <- sigmoid(-eta2)
 
-        theta <- pi * q^r / (pi * q^r + 1 - pi)
+        theta <- zero_at_risk_probability(pi, q, r)
 
         y1[y == 0] <- stats::rbinom(
             sum(y == 0),
@@ -1658,7 +1840,7 @@ ZINB_GP_spatial_count <- function(
         # ---------------------------------------------------------------
         # Store posterior draw.
         # ---------------------------------------------------------------
-        if (i > burn && i %% thin == 0) {
+        if (i > burn && (i - burn) %% thin == 0) {
             j <- (i - burn) / thin
 
             Alpha[j, ] <- alpha
@@ -1675,15 +1857,7 @@ ZINB_GP_spatial_count <- function(
             if (save_ypred) {
                 eta1 <- as.numeric(X %*% alpha)
                 eta2 <- as.numeric(X %*% beta + Vs %*% c)
-
-                pi <- sigmoid(eta1)
-
-                # NB mean conditional on being at risk:
-                # r * (1 - q) / q = r * exp(eta2).
-                mu_nb <- r * exp(eta2)
-
-                # Marginal ZINB expected count.
-                Y_pred[j, ] <- pi * mu_nb
+                Y_pred[j, ] <- draw_zinb_response(eta1, eta2, r)
                 at_risk[j, ] <- y1
             }
         }
@@ -1721,12 +1895,13 @@ ZINB_GP_spatial_count <- function(
 #' @param y Non-negative integer count response of length N.
 #' @param Vs Sparse or dense spatial random-effect design matrix. It should
 #'   have N rows and one column per spatial location.
-#' @param Ds Spatial distance matrix, with one row and column per spatial
-#'   random effect. Diagonal entries must be zero.
+#' @param Ds Spatial distance matrix with one row and column per full spatial
+#'   level, including the baseline level omitted from `Vs`. Diagonal entries
+#'   must be zero.
 #' @param nsim Total number of MCMC iterations.
 #' @param burn Number of burn-in iterations.
 #' @param thin Store every thin-th iteration after burn-in.
-#' @param save_ypred Whether to save posterior fitted means and at-risk draws.
+#' @param save_ypred Whether to save posterior predictive counts and at-risk draws.
 #' @param print_iter Print progress every print_iter iterations.
 #' @param print_progress Whether to print MCMC progress.
 #' @param lsPrior Prior and proposal controls for spatial GP length scales.
@@ -1769,6 +1944,9 @@ ZINB_GP_spatial_inflation <- function(
     mh_sd_r = NULL,
     kern = NULL
 ) {
+    validate_zinb_inputs(X, y, nsim, burn, thin)
+    validate_gp_design(Vs, Ds, nrow(X), "Vs", "Ds")
+
     if (length(y) != nrow(X)) {
         stop("y must have the same number of entries as rows in X.")
     }
@@ -1827,8 +2005,8 @@ ZINB_GP_spatial_inflation <- function(
     sd_r <- nullcheck(mh_sd_r, 0.4)
 
     # Fixed-effect prior precisions.
-    T0a <- diag(100, p)
-    T0b <- diag(100, p)
+    T0a <- diag(0.01, p)
+    T0b <- diag(0.01, p)
 
     # Initial latent at-risk indicator.
     y_ind <- as.integer(y != 0)
@@ -1843,14 +2021,14 @@ ZINB_GP_spatial_inflation <- function(
     eta2 <- as.numeric(X %*% beta)
 
     p_at_risk <- sigmoid(eta1)
-    q <- 1 / (1 + exp(eta2))
+    q <- sigmoid(-eta2)
 
     r <- 1
 
     y1 <- rep(0, N)
     y1[y > 0] <- 1
 
-    theta <- p_at_risk * q^r / (p_at_risk * q^r + 1 - p_at_risk)
+    theta <- zero_at_risk_probability(p_at_risk, q, r)
 
     y1[y == 0] <- stats::rbinom(
         sum(y == 0),
@@ -1876,7 +2054,6 @@ ZINB_GP_spatial_inflation <- function(
     Beta <- matrix(0, n_saved, p)
 
     A <- matrix(0, n_saved, n_space)
-    C <- matrix(0, n_saved, n_space)
 
     L1s <- rep(0, n_saved)
     Sigma1s <- rep(0, n_saved)
@@ -1919,9 +2096,9 @@ ZINB_GP_spatial_inflation <- function(
         eta2 <- as.numeric(X %*% beta)
 
         pi <- sigmoid(eta1)
-        q <- 1 / (1 + exp(eta2))
+        q <- sigmoid(-eta2)
 
-        theta <- pi * q^r / (pi * q^r + 1 - pi)
+        theta <- zero_at_risk_probability(pi, q, r)
 
         y1[y == 0] <- stats::rbinom(
             sum(y == 0),
@@ -2010,11 +2187,12 @@ ZINB_GP_spatial_inflation <- function(
         )
 
         z_nb <- (y[y1 == 1] - r) / (2 * w_nb)
+        X_nb <- X[y1 == 1, , drop = FALSE]
 
-        svd_vinv <- svd(crossprod(sqrt(w_nb) * X) + T0_nb)
+        svd_vinv <- svd(crossprod(sqrt(w_nb) * X_nb) + T0_nb)
         m <- solve_svd(
             svd_vinv,
-            t(sqrt(w_nb) * X) %*% (sqrt(w_nb) * z_nb)
+            t(sqrt(w_nb) * X_nb) %*% (sqrt(w_nb) * z_nb)
         )
 
         draw_nb <- c(mvn_sample_svd(svd_vinv, m))
@@ -2024,14 +2202,13 @@ ZINB_GP_spatial_inflation <- function(
         # ---------------------------------------------------------------
         # Store posterior draw.
         # ---------------------------------------------------------------
-        if (i > burn && i %% thin == 0) {
+        if (i > burn && (i - burn) %% thin == 0) {
             j <- (i - burn) / thin
 
             Alpha[j, ] <- alpha
             Beta[j, ] <- beta
 
             A[j, ] <- a
-            C[j, ] <- c
 
             L1s[j] <- l1s
             Sigma1s[j] <- sigma1s
@@ -2042,15 +2219,7 @@ ZINB_GP_spatial_inflation <- function(
             if (save_ypred) {
                 eta1 <- as.numeric(X %*% alpha + Vs %*% a)
                 eta2 <- as.numeric(X %*% beta)
-
-                pi <- sigmoid(eta1)
-
-                # NB mean conditional on being at risk:
-                # r * (1 - q) / q = r * exp(eta2).
-                mu_nb <- r * exp(eta2)
-
-                # Marginal ZINB expected count.
-                Y_pred[j, ] <- pi * mu_nb
+                Y_pred[j, ] <- draw_zinb_response(eta1, eta2, r)
                 at_risk[j, ] <- y1
             }
         }

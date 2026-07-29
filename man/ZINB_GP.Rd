@@ -33,7 +33,8 @@ ZINB_GP(
 
 \item{y}{Non-negative integer count response.}
 
-\item{coords}{Spatial coordinates used by the legacy spNNGP implementation.}
+\item{coords}{Spatial coordinate matrix with one row per full spatial level,
+including the baseline level omitted from \code{Vs}.}
 
 \item{nsim}{Total number of MCMC iterations; must exceed \code{burn}.}
 
@@ -53,13 +54,17 @@ ZINB_GP(
 
 \item{print_progress}{Whether to print MCMC progress.}
 
-\item{Vs}{Spatial random-effect design matrix with one row per observation.}
+\item{Vs}{Spatial random-effect design matrix with one row per observation
+and the baseline spatial column omitted.}
 
-\item{Vt}{Temporal random-effect design matrix with one row per observation.}
+\item{Vt}{Temporal random-effect design matrix with one row per observation
+and the baseline temporal column omitted.}
 
-\item{Ds}{Spatial distance matrix; its diagonal must be zero.}
+\item{Ds}{Spatial distance matrix for all spatial levels, including the
+baseline; its diagonal must be zero.}
 
-\item{Dt}{Temporal distance matrix; its diagonal must be zero.}
+\item{Dt}{Temporal distance matrix for all temporal levels, including the
+baseline; its diagonal must be zero.}
 
 \item{ltPrior}{List with \code{max}, \code{mh_sd}, \code{a}, and \code{b} for temporal length-scale prior and proposal controls.}
 
@@ -80,16 +85,21 @@ A list containing posterior MCMC draws:
 \item{C, D}{Spatial and temporal random effects for the count component.}
 \item{L1t, L2t}{Temporal GP length scales for the zero-inflation and count components.}
 \item{Sigma1t, Sigma2t}{Temporal GP scale parameters.}
-\item{Phi_bin, Phi_nb}{Spatial GP length-scale parameters.}
+\item{L1s, L2s}{Spatial GP length scales for the zero-inflation and count components.}
 \item{Sigma1s, Sigma2s}{Spatial GP scale parameters.}
 \item{R}{Negative-binomial dispersion parameter.}
-\item{at_risk}{At-risk indicator draws for each observation.}
-\item{Y_pred}{Posterior predictive draws, or \code{NULL} when \code{save_ypred} is \code{FALSE}.}
+\item{at_risk}{Latent at-risk indicator draws, included when \code{save_ypred} is \code{TRUE}.}
+\item{Y_pred}{Posterior predictive count draws, included when \code{save_ypred} is \code{TRUE}.}
 }
 }
 \description{
 Fits the zero-inflated negative-binomial Gaussian-process model
-described in \url{https://doi.org/10.1016/j.jspi.2023.106098}. The supplied
+described in \doi{10.1016/j.jspi.2023.106098}. The supplied
 spatial and temporal design and distance matrices determine which Gaussian
 processes are included.
+}
+\details{
+At least one spatial or temporal GP must be active in the count or
+zero-inflation component. Models with no active GP are outside this entry
+point and return \code{NULL} with an explanatory message.
 }

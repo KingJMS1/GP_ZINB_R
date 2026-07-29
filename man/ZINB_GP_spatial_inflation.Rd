@@ -30,8 +30,9 @@ ZINB_GP_spatial_inflation(
 \item{Vs}{Sparse or dense spatial random-effect design matrix. It should
 have N rows and one column per spatial location.}
 
-\item{Ds}{Spatial distance matrix, with one row and column per spatial
-random effect. Diagonal entries must be zero.}
+\item{Ds}{Spatial distance matrix with one row and column per full spatial
+level, including the baseline level omitted from \code{Vs}. Diagonal entries
+must be zero.}
 
 \item{nsim}{Total number of MCMC iterations.}
 
@@ -39,7 +40,7 @@ random effect. Diagonal entries must be zero.}
 
 \item{thin}{Store every thin-th iteration after burn-in.}
 
-\item{save_ypred}{Whether to save posterior fitted means and at-risk draws.}
+\item{save_ypred}{Whether to save posterior predictive counts and at-risk draws.}
 
 \item{print_iter}{Print progress every print_iter iterations.}
 

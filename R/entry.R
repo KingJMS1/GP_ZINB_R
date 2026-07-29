@@ -1,12 +1,17 @@
 #' ZINB_GP
 #' @description Fits the zero-inflated negative-binomial Gaussian-process model
-#' described in <https://doi.org/10.1016/j.jspi.2023.106098>. The supplied
+#' described in \doi{10.1016/j.jspi.2023.106098}. The supplied
 #' spatial and temporal design and distance matrices determine which Gaussian
 #' processes are included.
 #'
+#' @details At least one spatial or temporal GP must be active in the count or
+#'   zero-inflation component. Models with no active GP are outside this entry
+#'   point and return `NULL` with an explanatory message.
+#'
 #' @param X Fixed-effect design matrix with one row per observation.
 #' @param y Non-negative integer count response.
-#' @param coords Spatial coordinates used by the legacy spNNGP implementation.
+#' @param coords Spatial coordinate matrix with one row per full spatial level,
+#'   including the baseline level omitted from `Vs`.
 #' @param nsim Total number of MCMC iterations; must exceed `burn`.
 #' @param burn Number of burn-in iterations.
 #' @param use_count_gp Whether to include GP random effects in the count component.
@@ -16,10 +21,14 @@
 #' @param save_ypred Whether to save posterior predictive draws.
 #' @param print_iter Print progress every `print_iter` iterations.
 #' @param print_progress Whether to print MCMC progress.
-#' @param Vs Spatial random-effect design matrix with one row per observation.
-#' @param Vt Temporal random-effect design matrix with one row per observation.
-#' @param Ds Spatial distance matrix; its diagonal must be zero.
-#' @param Dt Temporal distance matrix; its diagonal must be zero.
+#' @param Vs Spatial random-effect design matrix with one row per observation
+#'   and the baseline spatial column omitted.
+#' @param Vt Temporal random-effect design matrix with one row per observation
+#'   and the baseline temporal column omitted.
+#' @param Ds Spatial distance matrix for all spatial levels, including the
+#'   baseline; its diagonal must be zero.
+#' @param Dt Temporal distance matrix for all temporal levels, including the
+#'   baseline; its diagonal must be zero.
 #' @param ltPrior List with `max`, `mh_sd`, `a`, and `b` for temporal length-scale prior and proposal controls.
 #' @param lsPrior List with `max`, `mh_sd`, `a`, and `b` for spatial length-scale prior and proposal controls.
 #' @param sigmaPrior List with `a` and `b` inverse-gamma prior parameters for GP scales.
@@ -33,16 +42,32 @@
 #'   \item{C, D}{Spatial and temporal random effects for the count component.}
 #'   \item{L1t, L2t}{Temporal GP length scales for the zero-inflation and count components.}
 #'   \item{Sigma1t, Sigma2t}{Temporal GP scale parameters.}
-#'   \item{Phi_bin, Phi_nb}{Spatial GP length-scale parameters.}
+#'   \item{L1s, L2s}{Spatial GP length scales for the zero-inflation and count components.}
 #'   \item{Sigma1s, Sigma2s}{Spatial GP scale parameters.}
 #'   \item{R}{Negative-binomial dispersion parameter.}
-#'   \item{at_risk}{At-risk indicator draws for each observation.}
-#'   \item{Y_pred}{Posterior predictive draws, or `NULL` when `save_ypred` is `FALSE`.}
+#'   \item{at_risk}{Latent at-risk indicator draws, included when `save_ypred` is `TRUE`.}
+#'   \item{Y_pred}{Posterior predictive count draws, included when `save_ypred` is `TRUE`.}
 #' }
 #' @export
 ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE, use_inflation_gp = FALSE, thin = 1, kern = NULL, save_ypred = FALSE, print_iter = 100, print_progress = FALSE, Vs = NULL, Vt = NULL, Ds = NULL, Dt = NULL, ltPrior = NULL, lsPrior = NULL, sigmaPrior = NULL, noisePrior = NULL, mh_sd_r = NULL) 
 {
     errMsg <- "Error: must specify at least 1 GP to use. Use optimization GLM software like INLA, MASS, glmmTMB, pscl, etc. to fit the model instead.\n"
+    no_gp_design <- is.null(Vs) && is.null(Vt)
+    no_gp_component <- !use_count_gp && !use_inflation_gp
+    if (no_gp_design || no_gp_component) {
+        cat(errMsg)
+        return(NULL)
+    }
+
+    validate_zinb_inputs(X, y, nsim, burn, thin)
+    if (!is.null(Vs)) {
+        validate_gp_design(Vs, Ds, nrow(X), "Vs", "Ds")
+        validate_spatial_coordinates(coords, Vs, Ds)
+    }
+    if (!is.null(Vt)) {
+        validate_gp_design(Vt, Dt, nrow(X), "Vt", "Dt")
+    }
+
     if (is.null(Vs))
     {
         if (is.null(Vt))
@@ -61,6 +86,10 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
                     # Both types of GP, temporal only
                     results <- ZINB_GP_spatial(X, y, Vt, Dt, nsim, burn, thin, save_ypred, print_iter, print_progress, ltPrior, sigmaPrior, noisePrior, mh_sd_r, kern)
                     toReturn <- list(Alpha = results$Alpha, Beta = results$Beta, B = results$A, D = results$C, L1t = results$L1s, Sigma1t = results$Sigma1s, Noise1t = results$Noise1s, L2t = results$L2s, Sigma2t = results$Sigma2s, Noise2t = results$Noise2s, R = results$R)
+                    if (save_ypred) {
+                        toReturn$Y_pred <- results$Y_pred
+                        toReturn$at_risk <- results$at_risk
+                    }
                     return(toReturn)
                 }
                 else
@@ -68,6 +97,10 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
                     # Only count GP, temporal only
                     results <- ZINB_GP_spatial_count(X, y, Vt, Dt, nsim, burn, thin, save_ypred, print_iter, print_progress, ltPrior, sigmaPrior, noisePrior, mh_sd_r, kern)
                     toReturn <- list(Alpha = results$Alpha, Beta = results$Beta, D = results$C, L2t = results$L2s, Sigma2t = results$Sigma2s, Noise2t = results$Noise2s, R = results$R)
+                    if (save_ypred) {
+                        toReturn$Y_pred <- results$Y_pred
+                        toReturn$at_risk <- results$at_risk
+                    }
                     return(toReturn)
                 }
             }
@@ -79,7 +112,11 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
                     # Inflation GP only
                     results <- ZINB_GP_spatial_inflation(X, y, Vt, Dt, nsim, burn, thin, save_ypred, print_iter, print_progress, ltPrior, sigmaPrior, noisePrior, mh_sd_r, kern)
                     toReturn <- list(Alpha = results$Alpha, Beta = results$Beta, B = results$A, L1t = results$L1s, Sigma1t = results$Sigma1s, Noise1t = results$Noise1s, R = results$R)
-                    return()
+                    if (save_ypred) {
+                        toReturn$Y_pred <- results$Y_pred
+                        toReturn$at_risk <- results$at_risk
+                    }
+                    return(toReturn)
                 }
                 else
                 {

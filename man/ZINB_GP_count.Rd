@@ -31,7 +31,8 @@ ZINB_GP_count(
 
 \item{y}{Non-negative integer count response.}
 
-\item{coords}{Spatial coordinates for the NNGP approximation.}
+\item{coords}{Spatial coordinate matrix with one row per full spatial level,
+including the baseline level omitted from \code{Vs}.}
 
 \item{Vs}{Spatial random-effect design matrix with one row per observation.}
 

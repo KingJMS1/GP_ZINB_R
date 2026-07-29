@@ -31,7 +31,8 @@ ZINB_GP_orig(
 
 \item{y}{Non-negative integer count response.}
 
-\item{coords}{Spatial coordinates for the NNGP approximation.}
+\item{coords}{Spatial coordinate matrix with one row per full spatial level,
+including the baseline level omitted from \code{Vs}.}
 
 \item{Vs}{Spatial random-effect design matrix with one row per observation.}
 
@@ -72,5 +73,5 @@ the negative-binomial dispersion parameter, and optional predictive draws.
 }
 \description{
 Fits the spatial-temporal zero-inflated negative-binomial
-Gaussian-process model described in \url{https://doi.org/10.1016/j.jspi.2023.106098}.
+Gaussian-process model described in \doi{10.1016/j.jspi.2023.106098}.
 }
