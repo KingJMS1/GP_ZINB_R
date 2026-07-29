@@ -43,9 +43,9 @@
 ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE, use_inflation_gp = FALSE, thin = 1, kern = NULL, save_ypred = FALSE, print_iter = 100, print_progress = FALSE, Vs = NULL, Vt = NULL, Ds = NULL, Dt = NULL, ltPrior = NULL, lsPrior = NULL, sigmaPrior = NULL, noisePrior = NULL, mh_sd_r = NULL) 
 {
     errMsg <- "Error: must specify at least 1 GP to use. Use optimization GLM software like INLA, MASS, glmmTMB, pscl, etc. to fit the model instead.\n"
-    if (Vs == NULL)
+    if (is.null(Vs))
     {
-        if (Vt == NULL)
+        if (is.null(Vt))
         {
             # No GPS
             cat(errMsg)
@@ -92,7 +92,7 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
     }
     else
     {
-        if (Vt == NULL)
+        if (is.null(Vt))
         {
             # Only spatial GPs
             if (use_count_gp)
