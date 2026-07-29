@@ -1,8 +1,10 @@
 pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
-articles: {}
-last_built: 2026-07-29T18:20Z
+articles:
+  oregon-landslides: oregon-landslides.html
+  simulating-zinb-gp: simulating-zinb-gp.html
+last_built: 2026-07-29T19:21Z
 urls:
   reference: https://kingjms1.github.io/NNGP_ZINB_R/reference
   article: https://kingjms1.github.io/NNGP_ZINB_R/articles
