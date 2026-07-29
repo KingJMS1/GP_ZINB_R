@@ -55,15 +55,32 @@ update_ls_sigma_noise(
 
 - noisePrior:
 
-  prior information for noise_ratio, needs mh_sd, a, b \#' @return A
-  List of the following sampled values:
+  prior information for noise_ratio, needs mh_sd, a, b
 
-  - **ls:** Length scale
+- kern:
 
-  - **sigma:** sigma
+  Kernel function accepting a distance matrix and a length scale.
 
-  - **noise_ratio:** noise ratio
+## Value
 
-  - **K:** Kernel matrix
+A list with the following elements:
 
-  - **K_inv:** Inverse of kernel matrix
+- ls:
+
+  Updated length scale.
+
+- sigma:
+
+  Updated GP scale.
+
+- noise_ratio:
+
+  Updated kernel-to-noise mixing ratio.
+
+- K:
+
+  Updated kernel matrix.
+
+- K_inv:
+
+  Inverse of the updated kernel matrix.

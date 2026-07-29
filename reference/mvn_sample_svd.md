@@ -23,3 +23,12 @@ mvn_sample_svd(P_svd, mu, entropy = NULL, threshold = 1e-12)
 
   Draw from MVN of correct size (can be used to draw all mvns at once
   for efficiency)
+
+- threshold:
+
+  Singular values at or below this threshold are discarded.
+
+## Value
+
+A draw from the multivariate normal distribution with precision matrix
+represented by `P_svd`.

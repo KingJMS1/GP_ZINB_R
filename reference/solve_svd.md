@@ -16,8 +16,12 @@ solve_svd(A_svd, b, threshold = 1e-12)
 
 - b:
 
-  b
+  Right-hand-side vector or matrix.
+
+- threshold:
+
+  Singular values at or below this threshold are discarded.
 
 ## Value
 
-x
+The SVD-based solution to `A %*% x = b`.

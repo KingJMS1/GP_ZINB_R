@@ -94,13 +94,30 @@
 
 
 <dt id="arg-noiseprior">noisePrior<a class="anchor" aria-label="anchor" href="#arg-noiseprior"></a></dt>
-<dd><p>prior information for noise_ratio, needs mh_sd, a, b
-#' @return A List of the following sampled values:</p><ul><li><p><strong>ls:</strong>  Length scale</p></li>
-<li><p><strong>sigma:</strong>  sigma</p></li>
-<li><p><strong>noise_ratio:</strong>  noise ratio</p></li>
-<li><p><strong>K:</strong>  Kernel matrix</p></li>
-<li><p><strong>K_inv:</strong>  Inverse of kernel matrix</p></li>
-</ul></dd>
+<dd><p>prior information for noise_ratio, needs mh_sd, a, b</p></dd>
+
+
+<dt id="arg-kern">kern<a class="anchor" aria-label="anchor" href="#arg-kern"></a></dt>
+<dd><p>Kernel function accepting a distance matrix and a length scale.</p></dd>
+
+</dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>A list with the following elements:</p><dl><dt>ls</dt>
+<dd><p>Updated length scale.</p></dd>
+
+<dt>sigma</dt>
+<dd><p>Updated GP scale.</p></dd>
+
+<dt>noise_ratio</dt>
+<dd><p>Updated kernel-to-noise mixing ratio.</p></dd>
+
+<dt>K</dt>
+<dd><p>Updated kernel matrix.</p></dd>
+
+<dt>K_inv</dt>
+<dd><p>Inverse of the updated kernel matrix.</p></dd>
+
 
 </dl></div>
 
@@ -109,7 +126,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Qing He, Mahlon Scott, Hsin-Hsiung Huang.</p>
+  <p>Developed by Mahlon Scott, Qing He, Hsin-Hsiung Huang.</p>
 </div>
 
 <div class="pkgdown-footer-right">

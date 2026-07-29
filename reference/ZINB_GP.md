@@ -1,7 +1,9 @@
 # ZINB_GP
 
-Run the ZINB NNGP model described in
-https://doi.org/10.1016/j.jspi.2023.106098.
+Fits the zero-inflated negative-binomial Gaussian-process model
+described in <https://doi.org/10.1016/j.jspi.2023.106098>. The supplied
+spatial and temporal design and distance matrices determine which
+Gaussian processes are included.
 
 ## Usage
 
@@ -35,158 +37,136 @@ ZINB_GP(
 
 - X:
 
-  Other Predictor variables
+  Fixed-effect design matrix with one row per observation.
 
 - y:
 
-  Zero inflated count response
+  Non-negative integer count response.
 
 - coords:
 
-  Spatial coordinates for NNGP
+  Spatial coordinates used by the legacy spNNGP implementation.
 
 - nsim:
 
-  How long to run MCMC in total, must be greater than burn, defaults to
-  5000 iterations
+  Total number of MCMC iterations; must exceed `burn`.
 
 - burn:
 
-  How long to run MCMC before saving samples, defaults to 1000
-  iterations
+  Number of burn-in iterations.
 
 - use_count_gp:
 
-  Whether or not to include GP random effects in the count model,
-  defaults to true, recommended
+  Whether to include GP random effects in the count component.
 
 - use_inflation_gp:
 
-  Whether or not to include GP random effects in the zero-inflation
-  portion of the model, defaults to false, not recommended
+  Whether to include GP random effects in the zero-inflation component.
 
 - thin:
 
-  How often to save MCMC samples, default is 1, saves every iteration.
-  Increase this if running out of memory.
+  Store every `thin`-th iteration after burn-in.
 
 - kern:
 
-  Kernel function, takes a distance matrix and length scale, returns
-  evaluated kernel. e.g. function(dist, ls) return(exp(-dist / (ls^2)))
+  Kernel function accepting a distance matrix and length scale.
 
 - save_ypred:
 
-  Whether or not to output the predicted values of the response,
-  defaults to false
+  Whether to save posterior predictive draws.
 
 - print_iter:
 
-  If print_progress is set, how often to print the iteration number of
-  the MCMC chain, defaults to every 100 iterations.
+  Print progress every `print_iter` iterations.
 
 - print_progress:
 
-  Whether or not to print the iteration number of the MCMC chain,
-  defaults to True
+  Whether to print MCMC progress.
 
 - Vs:
 
-  Spatially varying predictor variables (e.g. one-hot indication of
-  which location this is for varying intercept), wrapped in sparseMatrix
-  from Matrix R package. Will be multiplied by the spatial random
-  effects for prediction.
+  Spatial random-effect design matrix with one row per observation.
 
 - Vt:
 
-  Temporal varying predictor variables, wrapped in sparseMatrix from
-  Matrix R package. Will be multiplied by the temporal random effects
-  for prediction.
+  Temporal random-effect design matrix with one row per observation.
 
 - Ds:
 
-  Spatial distance matrix, diagonal should be 0, off diagonal is
-  distance between elements i and j in space, inputs to the spatial NNGP
-  kernel
+  Spatial distance matrix; its diagonal must be zero.
 
 - Dt:
 
-  Temporal distance matirx, diagonal should be 0, off diagonal is
-  distance between elements i and j in time, inputs to the temporal GP
-  kernel
+  Temporal distance matrix; its diagonal must be zero.
 
 - ltPrior:
 
-  Parameters for a gamma prior and MH update controls for temporal
-  lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain
-  all listed values.
+  List with `max`, `mh_sd`, `a`, and `b` for temporal length-scale prior
+  and proposal controls.
 
 - lsPrior:
 
-  Parameters for a gamma prior and MH update controls for spatial
-  lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain
-  all listed values.
+  List with `max`, `mh_sd`, `a`, and `b` for spatial length-scale prior
+  and proposal controls.
 
 - sigmaPrior:
 
-  Parameters for inverse-gamma prior for sigma e.g. list(a=0.01, b=0.1)
+  List with `a` and `b` inverse-gamma prior parameters for GP scales.
 
 - noisePrior:
 
-  Parameters for beta prior for kernel signal to noise ratio, along with
-  MH proposal controls, e.g. list(a=1.5, b=1.5, mh_sd=0.2)
+  List with `a`, `b`, and `mh_sd` for the GP noise-ratio prior and
+  proposal.
 
 - mh_sd_r:
 
-  MH standard deviation for proposal distribution for r, change if r
-  seems to be walking too slowly. Default is 0.4.
+  Proposal standard deviation for the negative-binomial dispersion
+  parameter.
 
 ## Value
 
-A List of the following sampled values:
+A list containing posterior MCMC draws:
 
-- **Alpha:** Model coefficients for logit model
+- Alpha:
 
-- **Beta:** Model coefficients for NB model
+  Fixed-effect coefficients for the zero-inflation component.
 
-- **A:** Portion of spatial random effect in the logit model explained
-  by kernel
+- Beta:
 
-- **B:** Portion of temporal random effect in the logit model explained
-  by kernel
+  Fixed-effect coefficients for the count component.
 
-- **C:** Portion of spatial random effect in the NB model explained by
-  kernel
+- A, B:
 
-- **D:** Portion of temporal random effect in the NB model explained by
-  kernel
+  Spatial and temporal random effects for the zero-inflation component.
 
-- **L1t:** Length scale for temporal kernel in logit model, i.e.
-  \\e^{-\frac{d^{2}}{2 l\_{1t}^{2}}}\\
+- C, D:
 
-- **Sigma1t:** Kernel scale parameter for above kernel, i.e.
-  \\\sigma\_{1t}^{2}e^{.}\\
+  Spatial and temporal random effects for the count component.
 
-- **L2t:** Length scale for temporal kernel in NB model, i.e.
-  \\e^{-\frac{d^{2}}{2 l\_{1t}^{2}}}\\
+- L1t, L2t:
 
-- **Sigma2t:** Kernel scale parameter for above kernel, i.e.
-  \\\sigma\_{2t}^{2}e^{.}\\
+  Temporal GP length scales for the zero-inflation and count components.
 
-- **Phi_bin:** Length scale for spatial kernel in logit model, i.e.
-  \\e^{-\Phi\_{bin}d^{2}}\\
+- Sigma1t, Sigma2t:
 
-- **Sigma1s:** Square root of multiplier for spatial kernel in logit
-  model
+  Temporal GP scale parameters.
 
-- **Phi_nb:** Length scale for spatial kernel in NB model, i.e.
-  \\e^{-\Phi\_{nb}d^{2}}\\
+- Phi_bin, Phi_nb:
 
-- **Sigma2s:** Square root of multiplier for spatial kernel in NB model
+  Spatial GP length-scale parameters.
 
-- **R:** Dispersion parameter for Negative Binomial distribution.
+- Sigma1s, Sigma2s:
 
-- **at_risk:** At risk indicator for each observation
+  Spatial GP scale parameters.
 
-- **Y_pred:** Predictions, sampled from the posterior distribution at
-  each iteration, NULL if save_ypred is false
+- R:
+
+  Negative-binomial dispersion parameter.
+
+- at_risk:
+
+  At-risk indicator draws for each observation.
+
+- Y_pred:
+
+  Posterior predictive draws, or `NULL` when `save_ypred` is `FALSE`.

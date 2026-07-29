@@ -17,11 +17,11 @@
 - [`ZINB_GP_spatial_inflation()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/ZINB_GP_spatial_inflation.md)
   : ZINB_GP_spatial_inflation
 - [`estimate()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate.md)
-  : estimate
+  : Draw from the full posterior predictive distribution
 - [`estimate_noab()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate_noab.md)
-  : estimate
+  : Draw posterior predictions without inflation random effects
 - [`estimate_nocd()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/estimate_nocd.md)
-  : estimate
+  : Draw posterior predictions without count random effects
 - [`gp_param_bounds()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/gp_param_bounds.md)
   : gp_param_bounds
 - [`kernel()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/kernel.md)
@@ -35,9 +35,9 @@
 - [`nullcheck()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/nullcheck.md)
   : nullcheck
 - [`predict()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/predict.md)
-  : predict
+  : Predict at new locations and times
 - [`sigmoid()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/sigmoid.md)
-  : sigmoid
+  : Numerically stable sigmoid function
 - [`solve_svd()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/solve_svd.md)
   : solve_svd
 - [`update_ls_sigma_noise()`](https://kingjms1.github.io/NNGP_ZINB_R/reference/update_ls_sigma_noise.md)

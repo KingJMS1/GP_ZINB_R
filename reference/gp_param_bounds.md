@@ -19,6 +19,15 @@ gp_param_bounds(Ds, Dt, kernel, tolerance = 1e-10)
 
   Temporal distance matrix
 
+- kernel:
+
+  Kernel function accepting a distance matrix and a length scale.
+
+- tolerance:
+
+  Numerical tolerance used to assess matrix invertibility.
+
 ## Value
 
-Minimum values for l*s, maximum values for l*t
+A list containing the upper bounds `ltmax` and `lsmax` for the temporal
+and spatial length scales, respectively.

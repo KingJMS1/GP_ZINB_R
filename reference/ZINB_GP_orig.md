@@ -1,7 +1,8 @@
 # ZINB_GP_orig
 
-Run the ZINB NNGP model described in
-https://doi.org/10.1016/j.jspi.2023.106098.
+Fits the spatial-temporal zero-inflated negative-binomial
+Gaussian-process model described in
+<https://doi.org/10.1016/j.jspi.2023.106098>.
 
 ## Usage
 
@@ -33,143 +34,87 @@ ZINB_GP_orig(
 
 - X:
 
-  Other Predictor variables
+  Fixed-effect design matrix with one row per observation.
 
 - y:
 
-  Zero inflated count response
+  Non-negative integer count response.
 
 - coords:
 
-  Spatial coordinates for NNGP
+  Spatial coordinates for the NNGP approximation.
 
 - Vs:
 
-  Spatially varying predictor variables (e.g. one-hot indication of
-  which location this is for varying intercept), wrapped in sparseMatrix
-  from Matrix R package. Will be multiplied by the spatial random
-  effects for prediction.
+  Spatial random-effect design matrix with one row per observation.
 
 - Vt:
 
-  Temporal varying predictor variables, wrapped in sparseMatrix from
-  Matrix R package. Will be multiplied by the temporal random effects
-  for prediction.
+  Temporal random-effect design matrix with one row per observation.
 
 - Ds:
 
-  Spatial distance matrix, diagonal should be 0, off diagonal is
-  distance between elements i and j in space, inputs to the spatial NNGP
-  kernel
+  Spatial distance matrix; its diagonal must be zero.
 
 - Dt:
 
-  Temporal distance matirx, diagonal should be 0, off diagonal is
-  distance between elements i and j in time, inputs to the temporal GP
-  kernel
+  Temporal distance matrix; its diagonal must be zero.
 
 - nsim:
 
-  How long to run MCMC in total, must be greater than burn.
+  Total number of MCMC iterations; must exceed `burn`.
 
 - burn:
 
-  How long to run MCMC before saving samples.
+  Number of burn-in iterations.
 
 - thin:
 
-  How often to save MCMC samples, default is 1, saves every iteration.
-  Increase this if running out of memory.
+  Store every `thin`-th iteration after burn-in.
 
 - save_ypred:
 
-  Whether or not to output the predicted values at every iteration
+  Whether to save posterior predictive draws.
 
 - print_iter:
 
-  How often to print the iteration number of the MCMC chain.
+  Print progress every `print_iter` iterations.
 
 - print_progress:
 
-  Whether or not to print the iteration number of the MCMC chain.
+  Whether to print MCMC progress.
 
 - ltPrior:
 
-  Parameters for a gamma prior and MH update controls for temporal
-  lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain
-  all listed values.
+  List with `max`, `mh_sd`, `a`, and `b` for temporal length-scale prior
+  and proposal controls.
 
 - lsPrior:
 
-  Parameters for a gamma prior and MH update controls for temporal
-  lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain
-  all listed values.
+  List with `max`, `mh_sd`, `a`, and `b` for spatial length-scale prior
+  and proposal controls.
 
 - sigmaPrior:
 
-  Parameters for inverse-gamma prior for sigma e.g. list(a=0.01, b=0.1)
+  List with `a` and `b` inverse-gamma prior parameters for GP scales.
 
 - noisePrior:
 
-  Parameters for beta prior for kernel signal to noise ratio, along with
-  MH proposal controls, e.g. list(a=1.5, b=1.5, mh_sd=0.2)
+  List with `a`, `b`, and `mh_sd` for the GP noise-ratio prior and
+  proposal.
 
 - mh_sd_r:
 
-  MH standard deviation for proposal distribution for r, change if r
-  seems to be walking too slowly. Default is 0.4.
+  Proposal standard deviation for the negative-binomial dispersion
+  parameter.
 
 - kern:
 
-  Kernel function, takes a distance matrix and length scale, returns
-  evaluated kernel. e.g. function(dist, ls) return(exp(-dist / (ls^2)))
+  Kernel function accepting a distance matrix and length scale.
 
 ## Value
 
-A List of the following sampled values:
-
-- **Alpha:** Model coefficients for logit model
-
-- **Beta:** Model coefficients for NB model
-
-- **A:** Portion of spatial random effect in the logit model explained
-  by kernel
-
-- **B:** Portion of temporal random effect in the logit model explained
-  by kernel
-
-- **C:** Portion of spatial random effect in the NB model explained by
-  kernel
-
-- **D:** Portion of temporal random effect in the NB model explained by
-  kernel
-
-- **L1t:** Length scale for temporal kernel in logit model, i.e.
-  \\e^{-\frac{d^{2}}{2 l\_{1t}^{2}}}\\
-
-- **Sigma1t:** Kernel scale parameter for above kernel, i.e.
-  \\\sigma\_{1t}^{2}e^{.}\\
-
-- **L2t:** Length scale for temporal kernel in NB model, i.e.
-  \\e^{-\frac{d^{2}}{2 l\_{1t}^{2}}}\\
-
-- **Sigma2t:** Kernel scale parameter for above kernel, i.e.
-  \\\sigma\_{2t}^{2}e^{.}\\
-
-- **Phi_bin:** Length scale for spatial kernel in logit model, i.e.
-  \\e^{-\Phi\_{bin}d^{2}}\\
-
-- **Sigma1s:** Square root of multiplier for spatial kernel in logit
-  model
-
-- **Phi_nb:** Length scale for spatial kernel in NB model, i.e.
-  \\e^{-\Phi\_{nb}d^{2}}\\
-
-- **Sigma2s:** Square root of multiplier for spatial kernel in NB model
-
-- **R:** Dispersion parameter for Negative Binomial distribution.
-
-- **at_risk:** At risk indicator for each observation
-
-- **Y_pred:** Predictions, sampled from the posterior distribution at
-  each iteration, NULL if save_ypred is false
+A list containing posterior MCMC draws, including fixed-effect
+coefficients, spatial and temporal random effects, their GP parameters,
+the negative-binomial dispersion parameter, and optional predictive
+draws.

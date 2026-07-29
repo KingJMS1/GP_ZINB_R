@@ -5,7 +5,13 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="ZINB_GP — ZINB_GP"><meta name="description" content="Run the ZINB NNGP model described in https://doi.org/10.1016/j.jspi.2023.106098."><meta property="og:description" content="Run the ZINB NNGP model described in https://doi.org/10.1016/j.jspi.2023.106098."></head><body>
+</script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="ZINB_GP — ZINB_GP"><meta name="description" content="Fits the zero-inflated negative-binomial Gaussian-process model
+described in https://doi.org/10.1016/j.jspi.2023.106098. The supplied
+spatial and temporal design and distance matrices determine which Gaussian
+processes are included."><meta property="og:description" content="Fits the zero-inflated negative-binomial Gaussian-process model
+described in https://doi.org/10.1016/j.jspi.2023.106098. The supplied
+spatial and temporal design and distance matrices determine which Gaussian
+processes are included."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -38,7 +44,10 @@
     </div>
 
     <div class="ref-description section level2">
-    <p>Run the ZINB NNGP model described in https://doi.org/10.1016/j.jspi.2023.106098.</p>
+    <p>Fits the zero-inflated negative-binomial Gaussian-process model
+described in <a href="https://doi.org/10.1016/j.jspi.2023.106098" class="external-link">https://doi.org/10.1016/j.jspi.2023.106098</a>. The supplied
+spatial and temporal design and distance matrices determine which Gaussian
+processes are included.</p>
     </div>
 
     <div class="section level2">
@@ -73,116 +82,133 @@
 
 
 <dl><dt id="arg-x">X<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Other Predictor variables</p></dd>
+<dd><p>Fixed-effect design matrix with one row per observation.</p></dd>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
-<dd><p>Zero inflated count response</p></dd>
+<dd><p>Non-negative integer count response.</p></dd>
 
 
 <dt id="arg-coords">coords<a class="anchor" aria-label="anchor" href="#arg-coords"></a></dt>
-<dd><p>Spatial coordinates for NNGP</p></dd>
+<dd><p>Spatial coordinates used by the legacy spNNGP implementation.</p></dd>
 
 
 <dt id="arg-nsim">nsim<a class="anchor" aria-label="anchor" href="#arg-nsim"></a></dt>
-<dd><p>How long to run MCMC in total, must be greater than burn, defaults to 5000 iterations</p></dd>
+<dd><p>Total number of MCMC iterations; must exceed <code>burn</code>.</p></dd>
 
 
 <dt id="arg-burn">burn<a class="anchor" aria-label="anchor" href="#arg-burn"></a></dt>
-<dd><p>How long to run MCMC before saving samples, defaults to 1000 iterations</p></dd>
+<dd><p>Number of burn-in iterations.</p></dd>
 
 
 <dt id="arg-use-count-gp">use_count_gp<a class="anchor" aria-label="anchor" href="#arg-use-count-gp"></a></dt>
-<dd><p>Whether or not to include GP random effects in the count model, defaults to true, recommended</p></dd>
+<dd><p>Whether to include GP random effects in the count component.</p></dd>
 
 
 <dt id="arg-use-inflation-gp">use_inflation_gp<a class="anchor" aria-label="anchor" href="#arg-use-inflation-gp"></a></dt>
-<dd><p>Whether or not to include GP random effects in the zero-inflation portion of the model, defaults to false, not recommended</p></dd>
+<dd><p>Whether to include GP random effects in the zero-inflation component.</p></dd>
 
 
 <dt id="arg-thin">thin<a class="anchor" aria-label="anchor" href="#arg-thin"></a></dt>
-<dd><p>How often to save MCMC samples, default is 1, saves every iteration. Increase this if running out of memory.</p></dd>
+<dd><p>Store every <code>thin</code>-th iteration after burn-in.</p></dd>
 
 
 <dt id="arg-kern">kern<a class="anchor" aria-label="anchor" href="#arg-kern"></a></dt>
-<dd><p>Kernel function, takes a distance matrix and length scale, returns evaluated kernel. e.g. function(dist, ls) return(exp(-dist / (ls^2)))</p></dd>
+<dd><p>Kernel function accepting a distance matrix and length scale.</p></dd>
 
 
 <dt id="arg-save-ypred">save_ypred<a class="anchor" aria-label="anchor" href="#arg-save-ypred"></a></dt>
-<dd><p>Whether or not to output the predicted values of the response, defaults to false</p></dd>
+<dd><p>Whether to save posterior predictive draws.</p></dd>
 
 
 <dt id="arg-print-iter">print_iter<a class="anchor" aria-label="anchor" href="#arg-print-iter"></a></dt>
-<dd><p>If print_progress is set, how often to print the iteration number of the MCMC chain, defaults to every 100 iterations.</p></dd>
+<dd><p>Print progress every <code>print_iter</code> iterations.</p></dd>
 
 
 <dt id="arg-print-progress">print_progress<a class="anchor" aria-label="anchor" href="#arg-print-progress"></a></dt>
-<dd><p>Whether or not to print the iteration number of the MCMC chain, defaults to True</p></dd>
+<dd><p>Whether to print MCMC progress.</p></dd>
 
 
 <dt id="arg-vs">Vs<a class="anchor" aria-label="anchor" href="#arg-vs"></a></dt>
-<dd><p>Spatially varying predictor variables (e.g. one-hot indication of which location this is for varying intercept), wrapped in sparseMatrix from Matrix R package. Will be multiplied by the spatial random effects for prediction.</p></dd>
+<dd><p>Spatial random-effect design matrix with one row per observation.</p></dd>
 
 
 <dt id="arg-vt">Vt<a class="anchor" aria-label="anchor" href="#arg-vt"></a></dt>
-<dd><p>Temporal varying predictor variables, wrapped in sparseMatrix from Matrix R package. Will be multiplied by the temporal random effects for prediction.</p></dd>
+<dd><p>Temporal random-effect design matrix with one row per observation.</p></dd>
 
 
 <dt id="arg-ds">Ds<a class="anchor" aria-label="anchor" href="#arg-ds"></a></dt>
-<dd><p>Spatial distance matrix, diagonal should be 0, off diagonal is distance between elements i and j in space, inputs to the spatial NNGP kernel</p></dd>
+<dd><p>Spatial distance matrix; its diagonal must be zero.</p></dd>
 
 
 <dt id="arg-dt">Dt<a class="anchor" aria-label="anchor" href="#arg-dt"></a></dt>
-<dd><p>Temporal distance matirx, diagonal should be 0, off diagonal is distance between elements i and j in time, inputs to the temporal GP kernel</p></dd>
+<dd><p>Temporal distance matrix; its diagonal must be zero.</p></dd>
 
 
 <dt id="arg-ltprior">ltPrior<a class="anchor" aria-label="anchor" href="#arg-ltprior"></a></dt>
-<dd><p>Parameters for a gamma prior and MH update controls for temporal lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.</p></dd>
+<dd><p>List with <code>max</code>, <code>mh_sd</code>, <code>a</code>, and <code>b</code> for temporal length-scale prior and proposal controls.</p></dd>
 
 
 <dt id="arg-lsprior">lsPrior<a class="anchor" aria-label="anchor" href="#arg-lsprior"></a></dt>
-<dd><p>Parameters for a gamma prior and MH update controls for spatial lengthscale: e.g. list(max=50, mh_sd=3, a=1, b=0.001), must contain all listed values.</p></dd>
+<dd><p>List with <code>max</code>, <code>mh_sd</code>, <code>a</code>, and <code>b</code> for spatial length-scale prior and proposal controls.</p></dd>
 
 
 <dt id="arg-sigmaprior">sigmaPrior<a class="anchor" aria-label="anchor" href="#arg-sigmaprior"></a></dt>
-<dd><p>Parameters for inverse-gamma prior for sigma e.g. list(a=0.01, b=0.1)</p></dd>
+<dd><p>List with <code>a</code> and <code>b</code> inverse-gamma prior parameters for GP scales.</p></dd>
 
 
 <dt id="arg-noiseprior">noisePrior<a class="anchor" aria-label="anchor" href="#arg-noiseprior"></a></dt>
-<dd><p>Parameters for beta prior for kernel signal to noise ratio, along with MH proposal controls, e.g. list(a=1.5, b=1.5, mh_sd=0.2)</p></dd>
+<dd><p>List with <code>a</code>, <code>b</code>, and <code>mh_sd</code> for the GP noise-ratio prior and proposal.</p></dd>
 
 
 <dt id="arg-mh-sd-r">mh_sd_r<a class="anchor" aria-label="anchor" href="#arg-mh-sd-r"></a></dt>
-<dd><p>MH standard deviation for proposal distribution for r, change if r seems to be walking too slowly. Default is 0.4.</p></dd>
+<dd><p>Proposal standard deviation for the negative-binomial dispersion parameter.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A List of the following sampled values:</p><ul><li><p><strong>Alpha:</strong>  Model coefficients for logit model</p></li>
-<li><p><strong>Beta:</strong>  Model coefficients for NB model</p></li>
-<li><p><strong>A:</strong>  Portion of spatial random effect in the logit model explained by kernel</p></li>
-<li><p><strong>B:</strong>  Portion of temporal random effect in the logit model explained by kernel</p></li>
-<li><p><strong>C:</strong>  Portion of spatial random effect in the NB model explained by kernel</p></li>
-<li><p><strong>D:</strong>  Portion of temporal random effect in the NB model explained by kernel</p></li>
-<li><p><strong>L1t:</strong>  Length scale for temporal kernel in logit model, i.e.  \(e^{-\frac{d^{2}}{2 l_{1t}^{2}}}\)</p></li>
-<li><p><strong>Sigma1t:</strong>  Kernel scale parameter for above kernel, i.e.  \(\sigma_{1t}^{2}e^{.}\)</p></li>
-<li><p><strong>L2t:</strong>  Length scale for temporal kernel in NB model, i.e.  \(e^{-\frac{d^{2}}{2 l_{1t}^{2}}}\)</p></li>
-<li><p><strong>Sigma2t:</strong>  Kernel scale parameter for above kernel, i.e.  \(\sigma_{2t}^{2}e^{.}\)</p></li>
-<li><p><strong>Phi_bin:</strong>  Length scale for spatial kernel in logit model, i.e.  \(e^{-\Phi_{bin}d^{2}}\)</p></li>
-<li><p><strong>Sigma1s:</strong>  Square root of multiplier for spatial kernel in logit model</p></li>
-<li><p><strong>Phi_nb:</strong>  Length scale for spatial kernel in NB model, i.e.  \(e^{-\Phi_{nb}d^{2}}\)</p></li>
-<li><p><strong>Sigma2s:</strong>  Square root of multiplier for spatial kernel in NB model</p></li>
-<li><p><strong>R:</strong>  Dispersion parameter for Negative Binomial distribution.</p></li>
-<li><p><strong>at_risk:</strong>  At risk indicator for each observation</p></li>
-<li><p><strong>Y_pred:</strong>  Predictions, sampled from the posterior distribution at each iteration, NULL if save_ypred is false</p></li>
-</ul></div>
+    <p>A list containing posterior MCMC draws:</p><dl><dt>Alpha</dt>
+<dd><p>Fixed-effect coefficients for the zero-inflation component.</p></dd>
+
+<dt>Beta</dt>
+<dd><p>Fixed-effect coefficients for the count component.</p></dd>
+
+<dt>A, B</dt>
+<dd><p>Spatial and temporal random effects for the zero-inflation component.</p></dd>
+
+<dt>C, D</dt>
+<dd><p>Spatial and temporal random effects for the count component.</p></dd>
+
+<dt>L1t, L2t</dt>
+<dd><p>Temporal GP length scales for the zero-inflation and count components.</p></dd>
+
+<dt>Sigma1t, Sigma2t</dt>
+<dd><p>Temporal GP scale parameters.</p></dd>
+
+<dt>Phi_bin, Phi_nb</dt>
+<dd><p>Spatial GP length-scale parameters.</p></dd>
+
+<dt>Sigma1s, Sigma2s</dt>
+<dd><p>Spatial GP scale parameters.</p></dd>
+
+<dt>R</dt>
+<dd><p>Negative-binomial dispersion parameter.</p></dd>
+
+<dt>at_risk</dt>
+<dd><p>At-risk indicator draws for each observation.</p></dd>
+
+<dt>Y_pred</dt>
+<dd><p>Posterior predictive draws, or <code>NULL</code> when <code>save_ypred</code> is <code>FALSE</code>.</p></dd>
+
+
+</dl></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Qing He, Mahlon Scott, Hsin-Hsiung Huang.</p>
+  <p>Developed by Mahlon Scott, Qing He, Hsin-Hsiung Huang.</p>
 </div>
 
 <div class="pkgdown-footer-right">

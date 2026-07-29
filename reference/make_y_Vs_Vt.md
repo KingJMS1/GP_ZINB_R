@@ -18,13 +18,16 @@ make_y_Vs_Vt(obs_matrix)
 
 ## Value
 
-A List of the following values:
+A list with the following elements:
 
-- **y:** Flattened version of the observation matrix, flattened in
-  column-major order.
+- y:
 
-- **Vs:** Spatial design matrix, indicates which elements in y
-  correspond with which positions in space
+  The observation matrix flattened in column-major order.
 
-- **Vt:** Temporal design matrix, indicates which elements in y
-  correspond with which positions in time
+- Vs:
+
+  Spatial design matrix mapping observations to locations.
+
+- Vt:
+
+  Temporal design matrix mapping observations to times.

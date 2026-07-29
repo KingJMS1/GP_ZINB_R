@@ -66,12 +66,98 @@
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
-  </main></div>
+
+<dl><dt id="arg-x">X<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
+<dd><p>Fixed-effect design matrix with one row per observation.</p></dd>
+
+
+<dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
+<dd><p>Non-negative integer count response.</p></dd>
+
+
+<dt id="arg-coords">coords<a class="anchor" aria-label="anchor" href="#arg-coords"></a></dt>
+<dd><p>Spatial coordinates for the NNGP approximation.</p></dd>
+
+
+<dt id="arg-vs">Vs<a class="anchor" aria-label="anchor" href="#arg-vs"></a></dt>
+<dd><p>Spatial random-effect design matrix with one row per observation.</p></dd>
+
+
+<dt id="arg-vt">Vt<a class="anchor" aria-label="anchor" href="#arg-vt"></a></dt>
+<dd><p>Temporal random-effect design matrix with one row per observation.</p></dd>
+
+
+<dt id="arg-ds">Ds<a class="anchor" aria-label="anchor" href="#arg-ds"></a></dt>
+<dd><p>Spatial distance matrix; its diagonal must be zero.</p></dd>
+
+
+<dt id="arg-dt">Dt<a class="anchor" aria-label="anchor" href="#arg-dt"></a></dt>
+<dd><p>Temporal distance matrix; its diagonal must be zero.</p></dd>
+
+
+<dt id="arg-nsim">nsim<a class="anchor" aria-label="anchor" href="#arg-nsim"></a></dt>
+<dd><p>Total number of MCMC iterations; must exceed <code>burn</code>.</p></dd>
+
+
+<dt id="arg-burn">burn<a class="anchor" aria-label="anchor" href="#arg-burn"></a></dt>
+<dd><p>Number of burn-in iterations.</p></dd>
+
+
+<dt id="arg-thin">thin<a class="anchor" aria-label="anchor" href="#arg-thin"></a></dt>
+<dd><p>Store every <code>thin</code>-th iteration after burn-in.</p></dd>
+
+
+<dt id="arg-save-ypred">save_ypred<a class="anchor" aria-label="anchor" href="#arg-save-ypred"></a></dt>
+<dd><p>Whether to save posterior predictive draws.</p></dd>
+
+
+<dt id="arg-print-iter">print_iter<a class="anchor" aria-label="anchor" href="#arg-print-iter"></a></dt>
+<dd><p>Print progress every <code>print_iter</code> iterations.</p></dd>
+
+
+<dt id="arg-print-progress">print_progress<a class="anchor" aria-label="anchor" href="#arg-print-progress"></a></dt>
+<dd><p>Whether to print MCMC progress.</p></dd>
+
+
+<dt id="arg-ltprior">ltPrior<a class="anchor" aria-label="anchor" href="#arg-ltprior"></a></dt>
+<dd><p>List with <code>max</code>, <code>mh_sd</code>, <code>a</code>, and <code>b</code> for temporal length-scale prior and proposal controls.</p></dd>
+
+
+<dt id="arg-lsprior">lsPrior<a class="anchor" aria-label="anchor" href="#arg-lsprior"></a></dt>
+<dd><p>List with <code>max</code>, <code>mh_sd</code>, <code>a</code>, and <code>b</code> for spatial length-scale prior and proposal controls.</p></dd>
+
+
+<dt id="arg-sigmaprior">sigmaPrior<a class="anchor" aria-label="anchor" href="#arg-sigmaprior"></a></dt>
+<dd><p>List with <code>a</code> and <code>b</code> inverse-gamma prior parameters for GP scales.</p></dd>
+
+
+<dt id="arg-noiseprior">noisePrior<a class="anchor" aria-label="anchor" href="#arg-noiseprior"></a></dt>
+<dd><p>List with <code>a</code>, <code>b</code>, and <code>mh_sd</code> for the GP noise-ratio prior and proposal.</p></dd>
+
+
+<dt id="arg-mh-sd-r">mh_sd_r<a class="anchor" aria-label="anchor" href="#arg-mh-sd-r"></a></dt>
+<dd><p>Proposal standard deviation for the negative-binomial dispersion parameter.</p></dd>
+
+
+<dt id="arg-kern">kern<a class="anchor" aria-label="anchor" href="#arg-kern"></a></dt>
+<dd><p>Kernel function accepting a distance matrix and length scale.</p></dd>
+
+</dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>A list containing posterior MCMC draws for the count GP, fixed
+effects, and the negative-binomial dispersion parameter.</p>
+    </div>
+
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Qing He, Mahlon Scott, Hsin-Hsiung Huang.</p>
+  <p>Developed by Mahlon Scott, Qing He, Hsin-Hsiung Huang.</p>
 </div>
 
 <div class="pkgdown-footer-right">
