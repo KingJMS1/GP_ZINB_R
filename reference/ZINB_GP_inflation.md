@@ -41,7 +41,8 @@ ZINB_GP_inflation(
 
 - coords:
 
-  Spatial coordinates for the NNGP approximation.
+  Spatial coordinate matrix with one row per full spatial level,
+  including the baseline level omitted from `Vs`.
 
 - Vs:
 

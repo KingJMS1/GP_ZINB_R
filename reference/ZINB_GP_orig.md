@@ -2,7 +2,8 @@
 
 Fits the spatial-temporal zero-inflated negative-binomial
 Gaussian-process model described in
-<https://doi.org/10.1016/j.jspi.2023.106098>.
+[doi:10.1016/j.jspi.2023.106098](https://doi.org/10.1016/j.jspi.2023.106098)
+.
 
 ## Usage
 
@@ -42,7 +43,8 @@ ZINB_GP_orig(
 
 - coords:
 
-  Spatial coordinates for the NNGP approximation.
+  Spatial coordinate matrix with one row per full spatial level,
+  including the baseline level omitted from `Vs`.
 
 - Vs:
 

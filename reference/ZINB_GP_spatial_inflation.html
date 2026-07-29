@@ -88,8 +88,9 @@ have N rows and one column per spatial location.</p></dd>
 
 
 <dt id="arg-ds">Ds<a class="anchor" aria-label="anchor" href="#arg-ds"></a></dt>
-<dd><p>Spatial distance matrix, with one row and column per spatial
-random effect. Diagonal entries must be zero.</p></dd>
+<dd><p>Spatial distance matrix with one row and column per full spatial
+level, including the baseline level omitted from <code>Vs</code>. Diagonal entries
+must be zero.</p></dd>
 
 
 <dt id="arg-nsim">nsim<a class="anchor" aria-label="anchor" href="#arg-nsim"></a></dt>
@@ -105,7 +106,7 @@ random effect. Diagonal entries must be zero.</p></dd>
 
 
 <dt id="arg-save-ypred">save_ypred<a class="anchor" aria-label="anchor" href="#arg-save-ypred"></a></dt>
-<dd><p>Whether to save posterior fitted means and at-risk draws.</p></dd>
+<dd><p>Whether to save posterior predictive counts and at-risk draws.</p></dd>
 
 
 <dt id="arg-print-iter">print_iter<a class="anchor" aria-label="anchor" href="#arg-print-iter"></a></dt>

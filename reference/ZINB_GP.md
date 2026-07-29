@@ -1,9 +1,10 @@
 # ZINB_GP
 
 Fits the zero-inflated negative-binomial Gaussian-process model
-described in <https://doi.org/10.1016/j.jspi.2023.106098>. The supplied
-spatial and temporal design and distance matrices determine which
-Gaussian processes are included.
+described in
+[doi:10.1016/j.jspi.2023.106098](https://doi.org/10.1016/j.jspi.2023.106098)
+. The supplied spatial and temporal design and distance matrices
+determine which Gaussian processes are included.
 
 ## Usage
 
@@ -45,7 +46,8 @@ ZINB_GP(
 
 - coords:
 
-  Spatial coordinates used by the legacy spNNGP implementation.
+  Spatial coordinate matrix with one row per full spatial level,
+  including the baseline level omitted from `Vs`.
 
 - nsim:
 
@@ -85,19 +87,23 @@ ZINB_GP(
 
 - Vs:
 
-  Spatial random-effect design matrix with one row per observation.
+  Spatial random-effect design matrix with one row per observation and
+  the baseline spatial column omitted.
 
 - Vt:
 
-  Temporal random-effect design matrix with one row per observation.
+  Temporal random-effect design matrix with one row per observation and
+  the baseline temporal column omitted.
 
 - Ds:
 
-  Spatial distance matrix; its diagonal must be zero.
+  Spatial distance matrix for all spatial levels, including the
+  baseline; its diagonal must be zero.
 
 - Dt:
 
-  Temporal distance matrix; its diagonal must be zero.
+  Temporal distance matrix for all temporal levels, including the
+  baseline; its diagonal must be zero.
 
 - ltPrior:
 
@@ -151,9 +157,9 @@ A list containing posterior MCMC draws:
 
   Temporal GP scale parameters.
 
-- Phi_bin, Phi_nb:
+- L1s, L2s:
 
-  Spatial GP length-scale parameters.
+  Spatial GP length scales for the zero-inflation and count components.
 
 - Sigma1s, Sigma2s:
 
@@ -165,8 +171,15 @@ A list containing posterior MCMC draws:
 
 - at_risk:
 
-  At-risk indicator draws for each observation.
+  Latent at-risk indicator draws, included when `save_ypred` is `TRUE`.
 
 - Y_pred:
 
-  Posterior predictive draws, or `NULL` when `save_ypred` is `FALSE`.
+  Posterior predictive count draws, included when `save_ypred` is
+  `TRUE`.
+
+## Details
+
+At least one spatial or temporal GP must be active in the count or
+zero-inflation component. Models with no active GP are outside this
+entry point and return `NULL` with an explanatory message.

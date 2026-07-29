@@ -42,8 +42,9 @@ ZINB_GP_spatial_count(
 
 - Ds:
 
-  Spatial distance matrix, with one row and column per spatial random
-  effect. Diagonal entries must be zero.
+  Spatial distance matrix with one row and column per full spatial
+  level, including the baseline level omitted from `Vs`. Diagonal
+  entries must be zero.
 
 - nsim:
 
@@ -59,7 +60,7 @@ ZINB_GP_spatial_count(
 
 - save_ypred:
 
-  Whether to save posterior fitted means and at-risk draws.
+  Whether to save posterior predictive counts and at-risk draws.
 
 - print_iter:
 
