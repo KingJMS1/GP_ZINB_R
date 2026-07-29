@@ -128,7 +128,7 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 }
 
 #' ZINB_GP_orig
-#' @description Fits the legacy spatial-temporal zero-inflated negative-binomial
+#' @description Fits the spatial-temporal zero-inflated negative-binomial
 #' Gaussian-process model described in <https://doi.org/10.1016/j.jspi.2023.106098>.
 #'
 #' @param X Fixed-effect design matrix with one row per observation.
@@ -153,7 +153,6 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 #' @return A list containing posterior MCMC draws, including fixed-effect
 #'   coefficients, spatial and temporal random effects, their GP parameters,
 #'   the negative-binomial dispersion parameter, and optional predictive draws.
-#' @export
 #' @importFrom MASS glm.nb
 #' @importFrom mvtnorm rmvnorm
 #' @importFrom BayesLogit rpg
@@ -161,6 +160,10 @@ update_ls_sigma_noise <- function(ls, sigma, noise_ratio, gpdraw, K, D, lsPrior,
 #' @importFrom Matrix sparseMatrix
 #' @importFrom msm rtnorm
 #' @importFrom msm dtnorm
+#' @importFrom stats rbinom
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats glm
 #' @importFrom stats rnorm
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom stats runif
@@ -442,6 +445,10 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
 #' @importFrom Matrix sparseMatrix
 #' @importFrom msm rtnorm
 #' @importFrom msm dtnorm
+#' @importFrom stats rbinom
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats glm
 #' @importFrom stats rnorm
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom stats runif
@@ -650,7 +657,7 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
             
             R[j] <- r
             if (save_ypred) {
-                Y_pred[j, ] <- estimate_nocd(X, alpha, beta, Vs, Vt, c, d, r)
+                Y_pred[j, ] <- estimate_nocd(X, alpha, beta, Vs, Vt, a, b, r)
                 y1s[j, ] <- y1
             }
         }
@@ -658,7 +665,7 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
     }
     # Put the results into a list
     results <- list(
-        Alpha = Alpha, Beta = Beta, C = C, D = D,
+        Alpha = Alpha, Beta = Beta, A = A, B = B,
         L1t = L1t, Sigma1t = Sigma1t, Noise1t=Noise1t,
         L1s = L1s, Sigma1s = Sigma1s, Noise1s=Noise1s,
         R = R
@@ -684,6 +691,10 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
 #' @importFrom Matrix sparseMatrix
 #' @importFrom msm rtnorm
 #' @importFrom msm dtnorm
+#' @importFrom stats rbinom
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats glm
 #' @importFrom stats rnorm
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom stats runif
@@ -938,7 +949,21 @@ ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sa
 #'   length scale.
 #'
 #' @return A list containing posterior MCMC draws.
-#' @export
+#' @importFrom MASS glm.nb
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom BayesLogit rpg
+#' @importFrom Matrix bdiag
+#' @importFrom Matrix sparseMatrix
+#' @importFrom msm rtnorm
+#' @importFrom msm dtnorm
+#' @importFrom stats rbinom
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats glm
+#' @importFrom stats rnorm
+#' @importFrom LaplacesDemon rinvgamma
+#' @importFrom stats runif
+#' @importFrom Matrix forceSymmetric
 ZINB_GP_spatial <- function(
     X,
     y,
@@ -1343,6 +1368,21 @@ ZINB_GP_spatial <- function(
 #'   length scale.
 #'
 #' @return A list containing posterior MCMC draws.
+#' @importFrom MASS glm.nb
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom BayesLogit rpg
+#' @importFrom Matrix bdiag
+#' @importFrom Matrix sparseMatrix
+#' @importFrom msm rtnorm
+#' @importFrom msm dtnorm
+#' @importFrom stats rbinom
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats glm
+#' @importFrom stats rnorm
+#' @importFrom LaplacesDemon rinvgamma
+#' @importFrom stats runif
+#' @importFrom Matrix forceSymmetric
 ZINB_GP_spatial_count <- function(
     X,
     y,
@@ -1697,6 +1737,21 @@ ZINB_GP_spatial_count <- function(
 #'   length scale.
 #'
 #' @return A list containing posterior MCMC draws.
+#' @importFrom MASS glm.nb
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom BayesLogit rpg
+#' @importFrom Matrix bdiag
+#' @importFrom Matrix sparseMatrix
+#' @importFrom msm rtnorm
+#' @importFrom msm dtnorm
+#' @importFrom stats rbinom
+#' @importFrom stats dnbinom
+#' @importFrom stats rbinom
+#' @importFrom stats glm
+#' @importFrom stats rnorm
+#' @importFrom LaplacesDemon rinvgamma
+#' @importFrom stats runif
+#' @importFrom Matrix forceSymmetric
 ZINB_GP_spatial_inflation <- function(
     X,
     y,

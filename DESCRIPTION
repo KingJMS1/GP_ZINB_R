@@ -16,11 +16,9 @@ RoxygenNote: 7.3.2
 URL: https://kingjms1.github.io/GP_ZINB_R/
 Imports:
     BayesLogit,
-    FastGP,
     LaplacesDemon,
     MASS,
     Matrix,
     msm,
     mvtnorm,
-    spNNGP,
     stats

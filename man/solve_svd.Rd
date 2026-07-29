@@ -4,7 +4,7 @@
 \alias{solve_svd}
 \title{solve_svd}
 \usage{
-solve_svd(A_svd, b, threshold = 1e-12)
+solve_svd(A_svd, b, threshold = 1e-10)
 }
 \arguments{
 \item{A_svd}{SVD of A}

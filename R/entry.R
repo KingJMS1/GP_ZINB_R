@@ -67,7 +67,7 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
                 {
                     # Only count GP, temporal only
                     results <- ZINB_GP_spatial_count(X, y, Vt, Dt, nsim, burn, thin, save_ypred, print_iter, print_progress, ltPrior, sigmaPrior, noisePrior, mh_sd_r, kern)
-                    toReturn <- list(Alpha = results$Alpha, Beta = results$Beta, D = results$C, L2t = results$L2s, Sigma2t = results$Sigma2s, Noise2t = results$Noise2s, R = R)
+                    toReturn <- list(Alpha = results$Alpha, Beta = results$Beta, D = results$C, L2t = results$L2s, Sigma2t = results$Sigma2s, Noise2t = results$Noise2s, R = results$R)
                     return(toReturn)
                 }
             }

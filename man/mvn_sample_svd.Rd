@@ -4,7 +4,7 @@
 \alias{mvn_sample_svd}
 \title{mvn_sample_svd}
 \usage{
-mvn_sample_svd(P_svd, mu, entropy = NULL, threshold = 1e-12)
+mvn_sample_svd(P_svd, mu, entropy = NULL, threshold = 1e-10)
 }
 \arguments{
 \item{P_svd}{SVD of precision matrix}
