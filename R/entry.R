@@ -134,7 +134,7 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
                 if (use_inflation_gp)
                 {
                     # Full GPs
-                    return(ZINB_GP(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin, save_ypred, print_iter, print_progress, ltPrior, lsPrior, sigmaPrior, noisePrior, mh_sd_r, kern))
+                    return(ZINB_GP_orig(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin, save_ypred, print_iter, print_progress, ltPrior, lsPrior, sigmaPrior, noisePrior, mh_sd_r, kern))
                 }
                 else
                 {

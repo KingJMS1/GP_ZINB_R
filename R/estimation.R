@@ -12,6 +12,7 @@
 #' @param d Temporal random-effect draw for the count component.
 #' @param r Negative-binomial dispersion parameter.
 #' @return A vector of posterior predictive count draws.
+#' @importFrom stats rbinom rnbinom
 estimate <- function(X, alpha, beta, Vs, Vt, a, b, c, d, r) {
     N <- nrow(X)
     

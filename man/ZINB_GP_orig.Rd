@@ -71,6 +71,6 @@ coefficients, spatial and temporal random effects, their GP parameters,
 the negative-binomial dispersion parameter, and optional predictive draws.
 }
 \description{
-Fits the legacy spatial-temporal zero-inflated negative-binomial
+Fits the spatial-temporal zero-inflated negative-binomial
 Gaussian-process model described in \url{https://doi.org/10.1016/j.jspi.2023.106098}.
 }
