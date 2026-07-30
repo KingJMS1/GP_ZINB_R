@@ -322,6 +322,72 @@ observation is at risk. The selected combination should follow the
 scientific role assigned to each process.</p>
 </div>
 <div class="section level2">
+<h2 id="predict-at-new-locations-and-times">Predict at new locations and times<a class="anchor" aria-label="anchor" href="#predict-at-new-locations-and-times"></a>
+</h2>
+<p>Prediction uses the same coordinate units and fixed-effect columns as
+the fitted model. First, construct one row for each new observation.
+Repeating a coordinate means that those observations share the same
+predicted GP random effect. Here, three new spatial locations are
+crossed with two future times:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">coords_future</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">250</span>, <span class="fl">250</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">500</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">750</span>, <span class="fl">750</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">times_future</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">400</span>, <span class="fl">450</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">prediction_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
+<span>  spatial <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">coords_future</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  temporal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">times_future</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">coords_new</span> <span class="op">&lt;-</span> <span class="va">coords_future</span><span class="op">[</span><span class="va">prediction_grid</span><span class="op">$</span><span class="va">spatial</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span><span class="va">time_coords_new</span> <span class="op">&lt;-</span> <span class="va">times_future</span><span class="op">[</span></span>
+<span>  <span class="va">prediction_grid</span><span class="op">$</span><span class="va">temporal</span>, ,</span>
+<span>  drop <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">]</span></span>
+<span><span class="va">X_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span></span>
+<span>  <span class="st">"(Intercept)"</span> <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">prediction_grid</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">prediction_inputs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_prediction_inputs.html">make_prediction_inputs</a></span><span class="op">(</span></span>
+<span>  coords <span class="op">=</span> <span class="va">coords</span>,</span>
+<span>  time_coords <span class="op">=</span> <span class="va">time_coord</span>,</span>
+<span>  coords_new <span class="op">=</span> <span class="va">coords_new</span>,</span>
+<span>  time_coords_new <span class="op">=</span> <span class="va">time_coords_new</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/make_prediction_inputs.html">make_prediction_inputs()</a></code> removes the original baseline
+coordinate from each conditioning matrix, matching the baseline
+contrasts used by the fitted random effects. It retains each unique new
+coordinate once in the augmented distance matrix and builds
+<code>Vs_new</code> and <code>Vt_new</code> to map the prediction rows
+back to those new levels.</p>
+<p>Pass the helper output to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>. For every retained
+posterior iteration, the method applies the GP conditioning rule to draw
+new spatial and temporal effects, combines them with that iteration’s
+fixed effects, and draws a new zero-inflated negative-binomial
+response:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">predicted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span></span>
+<span>  <span class="va">predict</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">fit</span>, X <span class="op">=</span> <span class="va">X_new</span><span class="op">)</span>,</span>
+<span>    <span class="va">prediction_inputs</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">predicted</span><span class="op">$</span><span class="va">Y_pred</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.5</span>, <span class="fl">0.975</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Rows of <code>predicted$Y_pred</code> correspond to retained
+posterior iterations and columns correspond to rows of
+<code>X_new</code>. The conditioned random-effect draws are also
+available as <code>predicted$A</code>, <code>predicted$B</code>,
+<code>predicted$C</code>, and <code>predicted$D</code>; models with
+fewer active GPs return only the applicable effects. If the model was
+fitted with a custom kernel, pass the same function as the
+<code>kern</code> argument to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>.</p>
+</div>
+<div class="section level2">
 <h2 id="interpret-posterior-draws">Interpret posterior draws<a class="anchor" aria-label="anchor" href="#interpret-posterior-draws"></a>
 </h2>
 <p>Each row of <code>fit$Alpha</code> and <code>fit$Beta</code> is a
@@ -333,7 +399,7 @@ dispersion draws, and <code>Noise1s</code>, <code>Noise1t</code>,
 structured-variance fractions <span class="math inline">\(\kappa\)</span>.</p>
 <p>For a fitted model, equal-tailed intervals can be computed
 directly:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">Alpha</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.5</span>, <span class="fl">0.975</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">Beta</span>, <span class="fl">2</span>, <span class="va">quantile</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.025</span>, <span class="fl">0.5</span>, <span class="fl">0.975</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Credible intervals summarize posterior uncertainty; they do not

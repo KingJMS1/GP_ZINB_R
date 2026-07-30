@@ -20,6 +20,8 @@
   : gp_param_bounds
 - [`kernel()`](https://kingjms1.github.io/GP_ZINB_R/reference/kernel.md)
   : Squared Exponential Kernel
+- [`make_prediction_inputs()`](https://kingjms1.github.io/GP_ZINB_R/reference/make_prediction_inputs.md)
+  : Build Inputs for Prediction at New GP Coordinates
 - [`make_y_Vs_Vt()`](https://kingjms1.github.io/GP_ZINB_R/reference/make_y_Vs_Vt.md)
   : make_y_Vs_Vt
 - [`mvn_sample_svd()`](https://kingjms1.github.io/GP_ZINB_R/reference/mvn_sample_svd.md)
@@ -28,8 +30,8 @@
   : Mix a Matrix with Identity Noise
 - [`nullcheck()`](https://kingjms1.github.io/GP_ZINB_R/reference/nullcheck.md)
   : nullcheck
-- [`predict()`](https://kingjms1.github.io/GP_ZINB_R/reference/predict.md)
-  : Predict at new locations and times
+- [`predict(`*`<zinb_gp_fit>`*`)`](https://kingjms1.github.io/GP_ZINB_R/reference/predict.zinb_gp_fit.md)
+  : Predict at New Locations and Times
 - [`sigmoid()`](https://kingjms1.github.io/GP_ZINB_R/reference/sigmoid.md)
   : Numerically stable sigmoid function
 - [`solve_svd()`](https://kingjms1.github.io/GP_ZINB_R/reference/solve_svd.md)
