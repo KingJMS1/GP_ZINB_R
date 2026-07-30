@@ -1,6 +1,6 @@
 Package: ZINB.GP
 Title: Bayesian Zero-Inflated Negative Binomial Gaussian Process Models
-Version: 0.0.1.0
+Version: 1.0.0
 Authors@R: c(
     person("Mahlon", "Scott", email = "mascottpy@gmail.com", role = c("aut")),
     person("Qing", "He", role = c("aut")),
