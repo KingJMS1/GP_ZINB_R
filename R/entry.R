@@ -117,7 +117,7 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
                         toReturn$Y_pred <- results$Y_pred
                         toReturn$at_risk <- results$at_risk
                     }
-                    return(toReturn)
+                    return(new_zinb_gp_fit(toReturn))
                 }
                 else
                 {
@@ -128,7 +128,7 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
                         toReturn$Y_pred <- results$Y_pred
                         toReturn$at_risk <- results$at_risk
                     }
-                    return(toReturn)
+                    return(new_zinb_gp_fit(toReturn))
                 }
             }
             else
@@ -143,7 +143,7 @@ ZINB_GP <- function(X, y, coords, nsim = 5000, burn = 1000, use_count_gp = TRUE,
                         toReturn$Y_pred <- results$Y_pred
                         toReturn$at_risk <- results$at_risk
                     }
-                    return(toReturn)
+                    return(new_zinb_gp_fit(toReturn))
                 }
                 else
                 {

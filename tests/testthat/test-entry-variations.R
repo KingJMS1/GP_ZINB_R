@@ -154,6 +154,46 @@ for (variation in entry_variations) {
             expect_equal(dim(fit[[effect]]), c(2L, ncol(fixture$Vt)))
             expect_true(all(is.finite(fit[[effect]])))
         }
+
+        prediction_inputs <- make_prediction_inputs(
+            coords = if (variation$use_space) fixture$coords else NULL,
+            time_coords = if (variation$use_time) {
+                matrix(seq(0, 3000, length.out = 4), ncol = 1)
+            } else {
+                NULL
+            },
+            coords_new = if (variation$use_space) {
+                rbind(c(250, 250), c(250, 250), c(750, 750))
+            } else {
+                NULL
+            },
+            time_coords_new = if (variation$use_time) {
+                c(3500, 4000, 3500)
+            } else {
+                NULL
+            }
+        )
+        X_new <- cbind(
+            "(Intercept)" = 1,
+            x = c(-0.5, 0, 0.5)
+        )
+        prediction <- do.call(
+            stats::predict,
+            c(list(object = fit, X = X_new), prediction_inputs)
+        )
+
+        expect_s3_class(fit, "zinb_gp_fit")
+        expect_s3_class(prediction, "zinb_gp_prediction")
+        expect_equal(dim(prediction$Y_pred), c(2L, 3L))
+        expect_true(all(prediction$Y_pred >= 0))
+        expect_setequal(
+            intersect(names(prediction), c("A", "B", "C", "D")),
+            variation$effects
+        )
+        for (effect in variation$effects) {
+            expect_equal(dim(prediction[[effect]]), c(2L, 2L))
+            expect_true(all(is.finite(prediction[[effect]])))
+        }
     })
 }
 

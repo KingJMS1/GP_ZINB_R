@@ -3,3 +3,5 @@ docs
 tmp/
 *.Rcheck/
 *.tar.gz
+/doc/
+/Meta/

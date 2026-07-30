@@ -11,8 +11,8 @@ Description: Fits Bayesian zero-inflated negative binomial regression models
     with Gaussian process random effects for spatial, temporal, or
     spatiotemporal count data. Provides Markov chain Monte Carlo sampling,
     configurable random effects in the zero-inflation and count components,
-    and posterior predictive draws. Implements methods described by He and
-    Huang (2024) <doi:10.1016/j.jspi.2023.106098>.
+    and posterior predictive draws. Implements a full GP version of the methods
+    described by He and Huang (2024) <doi:10.1016/j.jspi.2023.106098>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

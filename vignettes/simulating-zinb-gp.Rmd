@@ -260,6 +260,73 @@ count GP explains residual variation in conditional intensity; an inflation GP
 explains residual variation in whether an observation is at risk. The selected
 combination should follow the scientific role assigned to each process.
 
+## Predict at new locations and times
+
+Prediction uses the same coordinate units and fixed-effect columns as the
+fitted model. First, construct one row for each new observation. Repeating a
+coordinate means that those observations share the same predicted GP random
+effect. Here, three new spatial locations are crossed with two future times:
+
+```{r prediction-inputs, eval=FALSE}
+coords_future <- rbind(
+  c(250, 250),
+  c(500, 500),
+  c(750, 750)
+)
+times_future <- matrix(c(400, 450), ncol = 1)
+prediction_grid <- expand.grid(
+  spatial = seq_len(nrow(coords_future)),
+  temporal = seq_len(nrow(times_future))
+)
+
+coords_new <- coords_future[prediction_grid$spatial, , drop = FALSE]
+time_coords_new <- times_future[
+  prediction_grid$temporal, ,
+  drop = FALSE
+]
+X_new <- cbind(
+  "(Intercept)" = 1,
+  x = rep(0, nrow(prediction_grid))
+)
+
+prediction_inputs <- make_prediction_inputs(
+  coords = coords,
+  time_coords = time_coord,
+  coords_new = coords_new,
+  time_coords_new = time_coords_new
+)
+```
+
+`make_prediction_inputs()` removes the original baseline coordinate from each
+conditioning matrix, matching the baseline contrasts used by the fitted random
+effects. It retains each unique new coordinate once in the augmented distance
+matrix and builds `Vs_new` and `Vt_new` to map the prediction rows back to
+those new levels.
+
+Pass the helper output to `predict()`. For every retained posterior iteration,
+the method applies the GP conditioning rule to draw new spatial and temporal
+effects, combines them with that iteration's fixed effects, and draws a new
+zero-inflated negative-binomial response:
+
+```{r predict-new, eval=FALSE}
+predicted <- do.call(
+  predict,
+  c(
+    list(object = fit, X = X_new),
+    prediction_inputs
+  )
+)
+
+apply(predicted$Y_pred, 2, quantile, probs = c(0.025, 0.5, 0.975))
+```
+
+Rows of `predicted$Y_pred` correspond to retained posterior iterations and
+columns correspond to rows of `X_new`. The conditioned random-effect draws are
+also available as `predicted$A`, `predicted$B`, `predicted$C`, and
+`predicted$D`; models with fewer active GPs return only the applicable effects.
+If the model was fitted with a custom kernel, pass the same function as the
+`kern` argument to `predict()`.
+
 ## Interpret posterior draws
 
 Each row of `fit$Alpha` and `fit$Beta` is a retained posterior draw. The random

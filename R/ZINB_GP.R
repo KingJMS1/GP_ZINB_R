@@ -615,7 +615,7 @@ ZINB_GP_orig <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sav
         temp <- list(Y_pred = Y_pred, at_risk = y1s)
         results <- append(results, temp)
     }
-    return(results)
+    return(new_zinb_gp_fit(results))
 }
 
 
@@ -875,7 +875,7 @@ ZINB_GP_inflation <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1
         temp <- list(Y_pred = Y_pred, at_risk = y1s)
         results <- append(results, temp)
     }
-    return(results)
+    return(new_zinb_gp_fit(results))
 }
 
 
@@ -1132,7 +1132,7 @@ ZINB_GP_count <- function(X, y, coords, Vs, Vt, Ds, Dt, nsim, burn, thin = 1, sa
         temp <- list(Y_pred = Y_pred, at_risk = y1s)
         results <- append(results, temp)
     }
-    return(results)
+    return(new_zinb_gp_fit(results))
 }
 
 
@@ -1551,7 +1551,7 @@ ZINB_GP_spatial <- function(
         results$at_risk <- at_risk
     }
 
-    results
+    new_zinb_gp_fit(results)
 }
 
 
@@ -1920,7 +1920,7 @@ ZINB_GP_spatial_count <- function(
         results$at_risk <- at_risk
     }
 
-    results
+    new_zinb_gp_fit(results)
 }
 
 
@@ -2286,5 +2286,5 @@ ZINB_GP_spatial_inflation <- function(
         results$at_risk <- at_risk
     }
 
-    results
+    new_zinb_gp_fit(results)
 }
