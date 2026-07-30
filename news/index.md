@@ -1,6 +1,6 @@
 # Changelog
 
-## ZINB.GP 0.0.1.0
+## ZINB.GP 1.0.0
 
 ### Initial release
 
